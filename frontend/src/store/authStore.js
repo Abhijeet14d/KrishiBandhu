@@ -1,11 +1,16 @@
 import { create } from 'zustand';
 import { authService } from '../services/auth.service';
 
-const useAuthStore = create((set) => ({
+const useAuthStore = create((set, get) => ({
   user: JSON.parse(localStorage.getItem('user')) || null,
   isAuthenticated: !!localStorage.getItem('accessToken'),
   isLoading: false,
   error: null,
+
+  // Get access token
+  get accessToken() {
+    return localStorage.getItem('accessToken');
+  },
 
   // Set user
   setUser: (user) => set({ user, isAuthenticated: true }),
@@ -86,6 +91,38 @@ const useAuthStore = create((set) => ({
   logout: () => {
     authService.logout();
     set({ user: null, isAuthenticated: false });
+  },
+
+  // Update profile
+  updateProfile: async (data) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await authService.updateProfile(data);
+      set({ user: response.user, isLoading: false });
+      return response;
+    } catch (error) {
+      set({ 
+        isLoading: false, 
+        error: error.response?.data?.message || 'Failed to update profile' 
+      });
+      throw error;
+    }
+  },
+
+  // Change password
+  changePassword: async (currentPassword, newPassword) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await authService.changePassword(currentPassword, newPassword);
+      set({ isLoading: false });
+      return response;
+    } catch (error) {
+      set({ 
+        isLoading: false, 
+        error: error.response?.data?.message || 'Failed to change password' 
+      });
+      throw error;
+    }
   },
 
   // Clear error

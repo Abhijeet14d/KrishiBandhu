@@ -1,14 +1,25 @@
+import { useEffect } from 'react';
 import { Phone, History, User as UserIcon, LogOut } from 'lucide-react';
-import useAuthStore from '../store/authStore';
 import { useNavigate } from 'react-router-dom';
+import useAuthStore from '../store/authStore';
+import useConversationStore from '../store/conversationStore';
 
 const Dashboard = () => {
   const { user, logout } = useAuthStore();
+  const { conversations, fetchConversations } = useConversationStore();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    fetchConversations().catch(console.error);
+  }, [fetchConversations]);
 
   const handleLogout = () => {
     logout();
     navigate('/login');
+  };
+
+  const handleStartCall = () => {
+    navigate('/call');
   };
 
   return (
@@ -22,7 +33,7 @@ const Dashboard = () => {
                 <Phone className="w-6 h-6 text-white" />
               </div>
               <span className="text-2xl font-bold text-gray-900">
-                 Farmer Assistant
+                Farmer Assistant
               </span>
             </div>
             <div className="flex items-center space-x-4">
@@ -56,7 +67,10 @@ const Dashboard = () => {
         {/* Quick Actions */}
         <div className="grid md:grid-cols-3 gap-6 mb-8">
           {/* Start Call */}
-          <button className="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1">
+          <button 
+            onClick={handleStartCall}
+            className="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1"
+          >
             <div className="flex flex-col items-center text-center">
               <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mb-4">
                 <Phone className="w-8 h-8" />
@@ -69,20 +83,26 @@ const Dashboard = () => {
           </button>
 
           {/* History */}
-          <button className="bg-white rounded-2xl p-8 shadow-md hover:shadow-lg transition-shadow">
+          <button 
+            onClick={() => navigate('/history')}
+            className="bg-white rounded-2xl p-8 shadow-md hover:shadow-lg transition-shadow"
+          >
             <div className="flex flex-col items-center text-center">
               <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
                 <History className="w-8 h-8 text-blue-600" />
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-2">History</h3>
               <p className="text-gray-600">
-                View your past conversations
+                {conversations.length} conversation{conversations.length !== 1 ? 's' : ''}
               </p>
             </div>
           </button>
 
           {/* Profile */}
-          <button className="bg-white rounded-2xl p-8 shadow-md hover:shadow-lg transition-shadow">
+          <button 
+            onClick={() => navigate('/profile')}
+            className="bg-white rounded-2xl p-8 shadow-md hover:shadow-lg transition-shadow"
+          >
             <div className="flex flex-col items-center text-center">
               <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mb-4">
                 <UserIcon className="w-8 h-8 text-purple-600" />

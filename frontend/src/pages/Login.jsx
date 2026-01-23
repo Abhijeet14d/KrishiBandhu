@@ -101,6 +101,11 @@ const Login = () => {
                   placeholder="••••••••"
                 />
               </div>
+              <div className="text-right mt-2">
+                <Link to="/forgot-password" className="text-sm text-green-600 hover:text-green-700">
+                  Forgot password?
+                </Link>
+              </div>
             </div>
 
             {/* Submit Button */}

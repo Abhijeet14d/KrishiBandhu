@@ -67,4 +67,68 @@ const sendOTPEmail = async (email, name, otp) => {
   }
 };
 
-module.exports = { sendOTPEmail };
+// Send Password Reset email
+const sendPasswordResetEmail = async (email, name, resetUrl) => {
+  try {
+    const mailOptions = {
+      from: `"Farmer Assistant" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: 'Password Reset Request',
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: #10b981; color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0; }
+            .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 5px 5px; }
+            .btn { display: inline-block; background: #10b981; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; font-weight: bold; }
+            .btn:hover { background: #059669; }
+            .warning { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0; }
+            .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #666; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>🌾 Farmer Assistant</h1>
+            </div>
+            <div class="content">
+              <h2>Hello ${name},</h2>
+              <p>We received a request to reset your password for your Farmer Assistant account.</p>
+              
+              <p>Click the button below to reset your password:</p>
+              
+              <div style="text-align: center;">
+                <a href="${resetUrl}" class="btn">Reset Password</a>
+              </div>
+              
+              <div class="warning">
+                <strong>⚠️ This link will expire in 1 hour.</strong>
+                <p style="margin: 5px 0 0 0;">If you didn't request a password reset, please ignore this email. Your password will remain unchanged.</p>
+              </div>
+              
+              <p>If the button doesn't work, copy and paste this link into your browser:</p>
+              <p style="word-break: break-all; color: #10b981;">${resetUrl}</p>
+              
+              <div class="footer">
+                <p>© 2025 Farmer Assistant. All rights reserved.</p>
+              </div>
+            </div>
+          </div>
+        </body>
+        </html>
+      `
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log(`✉️ Password reset email sent to ${email}`);
+    return { success: true };
+  } catch (error) {
+    console.error('Password reset email error:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+module.exports = { sendOTPEmail, sendPasswordResetEmail };

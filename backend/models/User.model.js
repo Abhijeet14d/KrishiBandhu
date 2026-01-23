@@ -47,6 +47,14 @@ const userSchema = new mongoose.Schema({
     type: Number,
     default: 0,
     select: false
+  },
+  resetPasswordToken: {
+    type: String,
+    select: false
+  },
+  resetPasswordExpiry: {
+    type: Date,
+    select: false
   }
 }, {
   timestamps: true
@@ -96,6 +104,15 @@ userSchema.methods.verifyOTP = function(candidateOTP) {
   }
   
   return { valid: true };
+};
+
+// Method to generate password reset token
+userSchema.methods.generateResetToken = function() {
+  const crypto = require('crypto');
+  const resetToken = crypto.randomBytes(32).toString('hex');
+  this.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+  this.resetPasswordExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+  return resetToken;
 };
 
 module.exports = mongoose.model('User', userSchema);
