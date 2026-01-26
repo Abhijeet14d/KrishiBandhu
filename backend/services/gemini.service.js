@@ -3,6 +3,9 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 // Initialize Gemini AI
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
+// Available models to try (in order of preference) - Updated Jan 2026
+const AVAILABLE_MODELS = ['gemini-2.0-flash', 'gemini-2.5-flash', 'gemini-2.0-flash-001'];
+
 // System prompt for farming assistant
 const SYSTEM_PROMPT = `You are an expert Agricultural Assistant designed to help Indian farmers. Your role is to:
 
@@ -26,16 +29,32 @@ Remember: Farmers may ask questions in simple language. Interpret their queries 
 
 class GeminiService {
   constructor() {
-    // Create model with system instruction in the correct format
-    // Using gemini-1.5-pro as fallback if 2.0-flash quota is exceeded
+    this.currentModelIndex = 0;
+    this.initializeModel();
+    this.chatSessions = new Map(); // Store chat sessions by conversation ID
+  }
+
+  initializeModel() {
+    const modelName = AVAILABLE_MODELS[this.currentModelIndex];
+    console.log(`🤖 Initializing Gemini with model: ${modelName}`);
     this.model = genAI.getGenerativeModel({ 
-      model: 'gemini-1.5-pro',
+      model: modelName,
       systemInstruction: {
         role: 'system',
         parts: [{ text: SYSTEM_PROMPT }]
       }
     });
-    this.chatSessions = new Map(); // Store chat sessions by conversation ID
+  }
+
+  // Switch to next available model if quota exceeded
+  switchToNextModel() {
+    if (this.currentModelIndex < AVAILABLE_MODELS.length - 1) {
+      this.currentModelIndex++;
+      this.initializeModel();
+      this.chatSessions.clear(); // Clear old sessions as model changed
+      return true;
+    }
+    return false;
   }
 
   /**
@@ -83,7 +102,7 @@ class GeminiService {
    * @param {string} message - User's message
    * @returns {Promise<string>} AI response
    */
-  async sendMessage(conversationId, message) {
+  async sendMessage(conversationId, message, retryCount = 0) {
     try {
       console.log(`📨 Sending message to Gemini for conversation ${conversationId}:`, message);
       const chat = this.getChat(conversationId);
@@ -93,6 +112,27 @@ class GeminiService {
       return response;
     } catch (error) {
       console.error('❌ Gemini AI Error:', error.message);
+      
+      // Check if it's a quota/rate limit error (429)
+      if (error.message.includes('429') || error.message.includes('quota') || error.message.includes('Too Many Requests')) {
+        // Try switching to another model
+        if (this.switchToNextModel()) {
+          console.log(`🔄 Switched to model: ${AVAILABLE_MODELS[this.currentModelIndex]}, retrying...`);
+          return this.sendMessage(conversationId, message, retryCount + 1);
+        }
+        
+        // If all models exhausted, wait and retry once
+        if (retryCount < 1) {
+          console.log('⏳ All models quota exceeded, waiting 40 seconds before retry...');
+          await new Promise(resolve => setTimeout(resolve, 40000));
+          this.currentModelIndex = 0; // Reset to first model
+          this.initializeModel();
+          return this.sendMessage(conversationId, message, retryCount + 1);
+        }
+        
+        throw new Error('API quota exceeded. Please try again in a few minutes or check your API billing settings.');
+      }
+      
       console.error('Full error:', error);
       throw new Error('Failed to get AI response: ' + error.message);
     }

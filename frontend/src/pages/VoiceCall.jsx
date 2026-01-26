@@ -9,7 +9,9 @@ import {
   VolumeX,
   ArrowLeft,
   Loader2,
-  MessageCircle
+  MessageCircle,
+  Settings,
+  X
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useAuthStore from '../store/authStore';
@@ -33,9 +35,15 @@ const VoiceCall = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [transcript, setTranscript] = useState('');
+  const [finalTranscript, setFinalTranscript] = useState(''); // Accumulated final transcript
   const [conversationId, setConversationId] = useState(null);
   const [callDuration, setCallDuration] = useState(0);
   const [error, setError] = useState(null);
+  const [availableVoices, setAvailableVoices] = useState([]);
+  const [selectedVoice, setSelectedVoice] = useState(null);
+  const [showVoiceSettings, setShowVoiceSettings] = useState(false);
+  const [speechRate, setSpeechRate] = useState(0.9);
+  const [speechPitch, setSpeechPitch] = useState(1);
 
   // Refs
   const recognitionRef = useRef(null);
@@ -63,7 +71,7 @@ const VoiceCall = () => {
     }
 
     const recognition = new SpeechRecognition();
-    recognition.continuous = false;
+    recognition.continuous = true; // Keep listening until manually stopped
     recognition.interimResults = true;
     recognition.lang = 'en-IN'; // Indian English, can be changed
 
@@ -71,31 +79,26 @@ const VoiceCall = () => {
       console.log('Speech recognition started');
       setIsListening(true);
       setTranscript('');
+      setFinalTranscript('');
     };
 
     recognition.onresult = (event) => {
       console.log('Speech recognition result event:', event.results);
       let interimTranscript = '';
-      let finalTranscript = '';
+      let accumulatedFinal = '';
 
-      for (let i = event.resultIndex; i < event.results.length; i++) {
+      for (let i = 0; i < event.results.length; i++) {
         const transcript = event.results[i][0].transcript;
         if (event.results[i].isFinal) {
-          finalTranscript += transcript;
+          accumulatedFinal += transcript + ' ';
         } else {
           interimTranscript += transcript;
         }
       }
 
-      setTranscript(finalTranscript || interimTranscript);
-
-      if (finalTranscript) {
-        console.log('Final transcript received:', finalTranscript);
-        // Use ref to call the latest handleSendMessage
-        if (handleSendMessageRef.current) {
-          handleSendMessageRef.current(finalTranscript);
-        }
-      }
+      // Update the display transcript (final + interim)
+      setFinalTranscript(accumulatedFinal.trim());
+      setTranscript(accumulatedFinal + interimTranscript);
     };
 
     recognition.onerror = (event) => {
@@ -103,17 +106,40 @@ const VoiceCall = () => {
       setIsListening(false);
       
       if (event.error === 'no-speech') {
-        toast.error('No speech detected. Please try again.');
+        // Don't show error for no-speech, user might just be pausing
+        console.log('No speech detected, continuing...');
       } else if (event.error === 'not-allowed') {
         toast.error('Microphone access denied. Please enable microphone permissions.');
       }
     };
 
     recognition.onend = () => {
+      console.log('Speech recognition ended');
+      // Don't auto-restart - we want user to manually control
       setIsListening(false);
     };
 
     return recognition;
+  }, []);
+
+  // Load available voices
+  useEffect(() => {
+    const loadVoices = () => {
+      const voices = synthesisRef.current.getVoices();
+      if (voices.length > 0) {
+        setAvailableVoices(voices);
+        // Set default voice (prefer Indian English or Google voices)
+        const defaultVoice = voices.find(v => 
+          v.lang.includes('en-IN') || v.name.includes('Google') || v.lang.includes('hi-IN')
+        ) || voices.find(v => v.lang.includes('en')) || voices[0];
+        setSelectedVoice(defaultVoice);
+        console.log('Available voices:', voices.map(v => `${v.name} (${v.lang})`));
+      }
+    };
+
+    loadVoices();
+    // Chrome loads voices async
+    synthesisRef.current.onvoiceschanged = loadVoices;
   }, []);
 
   // Text-to-Speech function
@@ -124,37 +150,32 @@ const VoiceCall = () => {
     synthesisRef.current.cancel();
 
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'en-IN';
-    utterance.rate = 0.9;
-    utterance.pitch = 1;
+    utterance.rate = speechRate;
+    utterance.pitch = speechPitch;
 
-    // Try to use a good voice
-    const voices = synthesisRef.current.getVoices();
-    const preferredVoice = voices.find(v => 
-      v.lang.includes('en-IN') || v.lang.includes('en-GB') || v.name.includes('Google')
-    );
-    if (preferredVoice) {
-      utterance.voice = preferredVoice;
+    // Use selected voice or fallback
+    if (selectedVoice) {
+      utterance.voice = selectedVoice;
+      utterance.lang = selectedVoice.lang;
+    } else {
+      utterance.lang = 'en-IN';
     }
 
     utterance.onstart = () => setIsSpeaking(true);
     utterance.onend = () => {
       setIsSpeaking(false);
-      // Auto-start listening again after AI finishes speaking
-      if (isCallActive && isMicOn && recognitionRef.current) {
-        setTimeout(() => {
-          try {
-            recognitionRef.current.start();
-          } catch (e) {
-            // Recognition might already be running
-          }
-        }, 500);
-      }
+      // Don't auto-start listening - user controls when to speak
     };
     utterance.onerror = () => setIsSpeaking(false);
 
     synthesisRef.current.speak(utterance);
-  }, [isSpeakerOn, isCallActive, isMicOn]);
+  }, [isSpeakerOn, selectedVoice, speechRate, speechPitch]);
+
+  // Test voice function
+  const testVoice = () => {
+    const testText = "Hello! I am your farming assistant. How can I help you today?";
+    speak(testText);
+  };
 
   // Connect to socket on mount
   useEffect(() => {
@@ -354,14 +375,15 @@ const VoiceCall = () => {
     setIsSpeakerOn(!isSpeakerOn);
   };
 
-  // Start listening (manual trigger)
-  const startListening = () => {
-    console.log('startListening called', { 
+  // Toggle listening - Start or Stop and Send
+  const toggleListening = () => {
+    console.log('toggleListening called', { 
       hasRecognition: !!recognitionRef.current, 
       isMicOn, 
       isListening, 
       isSpeaking,
-      isProcessing 
+      isProcessing,
+      transcript
     });
     
     if (!recognitionRef.current) {
@@ -374,11 +396,6 @@ const VoiceCall = () => {
       return;
     }
     
-    if (isListening) {
-      console.log('Already listening');
-      return;
-    }
-    
     if (isSpeaking) {
       toast.error('Please wait for AI to finish speaking');
       return;
@@ -388,14 +405,40 @@ const VoiceCall = () => {
       toast.error('Please wait for response');
       return;
     }
-    
-    try {
-      console.log('Starting speech recognition...');
-      recognitionRef.current.start();
-    } catch (e) {
-      console.error('Failed to start recognition:', e);
-      toast.error('Failed to start listening: ' + e.message);
+
+    if (isListening) {
+      // Stop listening and send the message
+      console.log('Stopping speech recognition and sending message...');
+      recognitionRef.current.stop();
+      setIsListening(false);
+      
+      // Send the accumulated transcript
+      const textToSend = finalTranscript || transcript;
+      if (textToSend && textToSend.trim()) {
+        console.log('Sending accumulated transcript:', textToSend);
+        handleSendMessageRef.current(textToSend.trim());
+      } else {
+        toast.error('No speech detected. Please try again.');
+      }
+      setTranscript('');
+      setFinalTranscript('');
+    } else {
+      // Start listening
+      try {
+        console.log('Starting speech recognition...');
+        setTranscript('');
+        setFinalTranscript('');
+        recognitionRef.current.start();
+      } catch (e) {
+        console.error('Failed to start recognition:', e);
+        toast.error('Failed to start listening: ' + e.message);
+      }
     }
+  };
+
+  // Start listening (manual trigger) - kept for backward compatibility
+  const startListening = () => {
+    toggleListening();
   };
 
   // Format duration
@@ -428,6 +471,95 @@ const VoiceCall = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 flex flex-col">
+      {/* Voice Settings Modal */}
+      {showVoiceSettings && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-gray-800 rounded-2xl p-6 w-full max-w-md border border-gray-700">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold text-white">Voice Settings</h2>
+              <button
+                onClick={() => setShowVoiceSettings(false)}
+                className="text-gray-400 hover:text-white"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            {/* Voice Selection */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Voice ({availableVoices.length} available)
+              </label>
+              <select
+                value={selectedVoice?.name || ''}
+                onChange={(e) => {
+                  const voice = availableVoices.find(v => v.name === e.target.value);
+                  setSelectedVoice(voice);
+                }}
+                className="w-full bg-gray-700 text-white rounded-lg px-4 py-2 border border-gray-600 focus:ring-2 focus:ring-green-500"
+              >
+                {availableVoices.map((voice) => (
+                  <option key={voice.name} value={voice.name}>
+                    {voice.name} ({voice.lang})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Speech Rate */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Speed: {speechRate.toFixed(1)}x
+              </label>
+              <input
+                type="range"
+                min="0.5"
+                max="2"
+                step="0.1"
+                value={speechRate}
+                onChange={(e) => setSpeechRate(parseFloat(e.target.value))}
+                className="w-full accent-green-500"
+              />
+              <div className="flex justify-between text-xs text-gray-500 mt-1">
+                <span>Slow</span>
+                <span>Normal</span>
+                <span>Fast</span>
+              </div>
+            </div>
+
+            {/* Speech Pitch */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Pitch: {speechPitch.toFixed(1)}
+              </label>
+              <input
+                type="range"
+                min="0.5"
+                max="2"
+                step="0.1"
+                value={speechPitch}
+                onChange={(e) => setSpeechPitch(parseFloat(e.target.value))}
+                className="w-full accent-green-500"
+              />
+              <div className="flex justify-between text-xs text-gray-500 mt-1">
+                <span>Low</span>
+                <span>Normal</span>
+                <span>High</span>
+              </div>
+            </div>
+
+            {/* Test Button */}
+            <button
+              onClick={testVoice}
+              disabled={isSpeaking}
+              className="w-full py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white rounded-lg font-medium transition-colors"
+            >
+              {isSpeaking ? 'Speaking...' : 'Test Voice'}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <header className="bg-gray-800/50 backdrop-blur border-b border-gray-700 p-4">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
@@ -445,7 +577,13 @@ const VoiceCall = () => {
               <p className="text-green-400 text-sm">{formatDuration(callDuration)}</p>
             )}
           </div>
-          <div className="w-20"></div>
+          <button
+            onClick={() => setShowVoiceSettings(true)}
+            className="flex items-center text-gray-300 hover:text-white p-2 rounded-lg hover:bg-gray-700"
+            title="Voice Settings"
+          >
+            <Settings className="w-5 h-5" />
+          </button>
         </div>
       </header>
 
@@ -562,18 +700,18 @@ const VoiceCall = () => {
                 {isMicOn ? <Mic className="w-7 h-7" /> : <MicOff className="w-7 h-7" />}
               </button>
 
-              {/* Push to Talk */}
+              {/* Push to Talk - Toggle Button */}
               <button
-                onMouseDown={startListening}
-                onTouchStart={startListening}
-                disabled={!isMicOn || isListening || isSpeaking || isProcessing}
-                className={`w-20 h-20 rounded-full flex items-center justify-center transition-all ${
+                onClick={toggleListening}
+                disabled={!isMicOn || isSpeaking || isProcessing}
+                className={`w-20 h-20 rounded-full flex flex-col items-center justify-center transition-all ${
                   isListening
-                    ? 'bg-green-500 scale-110'
+                    ? 'bg-red-500 hover:bg-red-600 scale-110 animate-pulse'
                     : 'bg-green-600 hover:bg-green-700 disabled:bg-gray-600'
                 } text-white shadow-lg`}
               >
                 <Mic className="w-8 h-8" />
+                <span className="text-xs mt-1">{isListening ? 'Send' : 'Speak'}</span>
               </button>
 
               {/* Speaker Toggle */}
@@ -602,7 +740,9 @@ const VoiceCall = () => {
         {/* Instructions */}
         {isCallActive && (
           <p className="text-center text-gray-400 text-sm mt-4">
-            Tap the green microphone button and speak your question
+            {isListening 
+              ? 'Speak your question, then tap the button again to send' 
+              : 'Tap the green button to start speaking'}
           </p>
         )}
       </main>

@@ -127,8 +127,9 @@ const initializeSocketHandlers = (io) => {
     socket.on('message:send', async ({ conversationId, message }, callback) => {
       console.log(`📩 Received message from ${socket.user.name}:`, { conversationId, message });
       
+      let conversation;
       try {
-        const conversation = await Conversation.findOne({
+        conversation = await Conversation.findOne({
           _id: conversationId,
           user: socket.user._id
         });
@@ -149,11 +150,20 @@ const initializeSocketHandlers = (io) => {
           });
         }
 
-        // Add user message
+        // Add user message and save immediately
         conversation.messages.push({
           role: 'user',
           content: message
         });
+
+        // Generate title if first user message
+        if (conversation.messages.filter(m => m.role === 'user').length === 1) {
+          conversation.generateTitle();
+        }
+
+        // Save user message first (before AI call)
+        await conversation.save();
+        console.log('✅ User message saved to database');
 
         // Emit that we received the message and are processing
         socket.emit('message:processing', { conversationId });
@@ -169,13 +179,8 @@ const initializeSocketHandlers = (io) => {
           content: aiResponse
         });
 
-        // Generate title if first user message
-        if (conversation.messages.filter(m => m.role === 'user').length === 1) {
-          conversation.generateTitle();
-        }
-
         await conversation.save();
-        console.log('✅ Conversation saved, sending response back to client');
+        console.log('✅ AI response saved, sending response back to client');
 
         // Send AI response back
         callback({
@@ -196,9 +201,12 @@ const initializeSocketHandlers = (io) => {
       } catch (error) {
         console.error('❌ Message send error:', error.message);
         console.error('Full error:', error);
+        
+        // Even if AI fails, the user message is already saved
         callback({
           success: false,
-          error: error.message || 'Failed to process message'
+          error: error.message || 'Failed to process message',
+          title: conversation?.title // Still send title if generated
         });
       }
     });
