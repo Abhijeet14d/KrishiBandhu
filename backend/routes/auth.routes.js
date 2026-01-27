@@ -8,6 +8,8 @@ const {
   refreshToken,
   getMe,
   updateProfile,
+  updateLocation,
+  updateFarmingProfile,
   changePassword,
   forgotPassword,
   resetPassword
@@ -48,5 +50,7 @@ router.post('/reset-password', passwordResetLimiter, resetPassword);
 router.get('/me', protect, getMe);
 router.put('/profile', protect, updateProfile);
 router.put('/change-password', protect, changePassword);
+router.put('/location', protect, updateLocation);
+router.put('/farming-profile', protect, updateFarmingProfile);
 
 module.exports = router;

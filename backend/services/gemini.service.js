@@ -1,4 +1,5 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const dataAggregatorService = require('./dataAggregator.service');
 
 // Initialize Gemini AI
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
@@ -25,6 +26,14 @@ Guidelines:
 - Consider seasonal factors in your advice
 - Prioritize sustainable and cost-effective solutions
 
+IMPORTANT: When real-time data (market prices, weather, government schemes) is provided in the context:
+- Use this data to give accurate, current information
+- Quote specific prices, temperatures, and scheme details from the data
+- Mention that this is current data for the farmer's specific location
+- For market prices, suggest best times to sell based on price trends
+- For weather, give actionable farming advice based on conditions
+- For schemes, explain eligibility and application process clearly
+
 Remember: Farmers may ask questions in simple language. Interpret their queries with context and provide helpful responses.`;
 
 class GeminiService {
@@ -32,6 +41,7 @@ class GeminiService {
     this.currentModelIndex = 0;
     this.initializeModel();
     this.chatSessions = new Map(); // Store chat sessions by conversation ID
+    this.userLocations = new Map(); // Store user locations by conversation ID
   }
 
   initializeModel() {
@@ -44,6 +54,25 @@ class GeminiService {
         parts: [{ text: SYSTEM_PROMPT }]
       }
     });
+  }
+
+  /**
+   * Set user location for a conversation
+   * @param {string} conversationId - Conversation ID
+   * @param {Object} location - User location { state, district, city, lat, lon }
+   */
+  setUserLocation(conversationId, location) {
+    this.userLocations.set(conversationId, location);
+    console.log(`📍 Location set for conversation ${conversationId}:`, location);
+  }
+
+  /**
+   * Get user location for a conversation
+   * @param {string} conversationId - Conversation ID
+   * @returns {Object|null} User location
+   */
+  getUserLocation(conversationId) {
+    return this.userLocations.get(conversationId) || null;
   }
 
   // Switch to next available model if quota exceeded
@@ -100,14 +129,40 @@ class GeminiService {
    * Send a message and get AI response
    * @param {string} conversationId - Conversation ID
    * @param {string} message - User's message
+   * @param {Object} userLocation - Optional user location override
    * @returns {Promise<string>} AI response
    */
-  async sendMessage(conversationId, message, retryCount = 0) {
+  async sendMessage(conversationId, message, userLocation = null, retryCount = 0) {
     try {
       console.log(`📨 Sending message to Gemini for conversation ${conversationId}:`, message);
+      
+      // Get location from parameter or stored location
+      const location = userLocation || this.getUserLocation(conversationId);
+      
+      // Fetch relevant external data if location is available
+      let enrichedMessage = message;
+      let externalData = null;
+      
+      if (location && location.state) {
+        console.log(`📍 Fetching external data for: ${location.district || location.city}, ${location.state}`);
+        externalData = await dataAggregatorService.fetchRelevantData(message, location);
+        
+        if (externalData.fetched && externalData.context) {
+          // Append real-time data context to the message
+          enrichedMessage = message + externalData.context;
+          console.log('✅ External data context added to message');
+        }
+      }
+      
       const chat = this.getChat(conversationId);
-      const result = await chat.sendMessage(message);
-      const response = result.response.text();
+      const result = await chat.sendMessage(enrichedMessage);
+      let response = result.response.text();
+      
+      // Refine response with actual data if needed
+      if (externalData && externalData.fetched) {
+        response = dataAggregatorService.refineResponse(response, externalData);
+      }
+      
       console.log(`✅ Gemini response received:`, response.substring(0, 100) + '...');
       return response;
     } catch (error) {
@@ -127,7 +182,7 @@ class GeminiService {
           await new Promise(resolve => setTimeout(resolve, 40000));
           this.currentModelIndex = 0; // Reset to first model
           this.initializeModel();
-          return this.sendMessage(conversationId, message, retryCount + 1);
+          return this.sendMessage(conversationId, message, null, retryCount + 1);
         }
         
         throw new Error('API quota exceeded. Please try again in a few minutes or check your API billing settings.');
@@ -160,6 +215,7 @@ class GeminiService {
    */
   endChat(conversationId) {
     this.chatSessions.delete(conversationId);
+    this.userLocations.delete(conversationId);
   }
 
   /**
@@ -168,6 +224,24 @@ class GeminiService {
    */
   getWelcomeMessage() {
     return "Namaste! I am your Assistant. Please speak your question, and I'll do my best to help you!";
+  }
+
+  /**
+   * Get dashboard data for user's location
+   * @param {Object} userLocation - User location
+   * @returns {Promise<Object>} Dashboard data
+   */
+  async getDashboardData(userLocation) {
+    return dataAggregatorService.getDashboardData(userLocation);
+  }
+
+  /**
+   * Get farming advice based on weather
+   * @param {Object} userLocation - User location
+   * @returns {Promise<Object>} Farming advice
+   */
+  async getFarmingAdvice(userLocation) {
+    return dataAggregatorService.getFarmingAdvice(userLocation);
   }
 }
 

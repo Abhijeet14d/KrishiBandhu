@@ -13,7 +13,10 @@ const useAuthStore = create((set, get) => ({
   },
 
   // Set user
-  setUser: (user) => set({ user, isAuthenticated: true }),
+  setUser: (user) => {
+    localStorage.setItem('user', JSON.stringify(user));
+    set({ user, isAuthenticated: true });
+  },
 
   // Register
   register: async (userData) => {

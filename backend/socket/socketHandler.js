@@ -44,8 +44,11 @@ const initializeSocketHandlers = (io) => {
     socket.join(`user:${socket.user._id}`);
 
     // Handle starting a new conversation
-    socket.on('conversation:start', async (callback) => {
+    socket.on('conversation:start', async (data, callback) => {
       try {
+        // Support both old format (no data) and new format (with location)
+        const locationData = data?.location || null;
+        
         const conversation = await Conversation.create({
           user: socket.user._id,
           messages: []
@@ -53,6 +56,19 @@ const initializeSocketHandlers = (io) => {
 
         // Start Gemini chat session
         geminiService.startChat(conversation._id.toString());
+        
+        // Set user location for this conversation (from request or user profile)
+        const userLocation = locationData || socket.user.location || {};
+        if (userLocation && userLocation.state) {
+          geminiService.setUserLocation(conversation._id.toString(), {
+            state: userLocation.state,
+            district: userLocation.district,
+            city: userLocation.city,
+            village: userLocation.village,
+            lat: userLocation.coordinates?.lat || userLocation.lat,
+            lon: userLocation.coordinates?.lon || userLocation.lon
+          });
+        }
 
         const welcomeMessage = geminiService.getWelcomeMessage();
 
@@ -66,19 +82,26 @@ const initializeSocketHandlers = (io) => {
         socket.conversationId = conversation._id.toString();
         socket.join(`conversation:${conversation._id}`);
 
-        callback({
-          success: true,
-          conversationId: conversation._id,
-          welcomeMessage
-        });
+        // Handle callback as function or as second argument
+        const cb = typeof callback === 'function' ? callback : data;
+        if (typeof cb === 'function') {
+          cb({
+            success: true,
+            conversationId: conversation._id,
+            welcomeMessage
+          });
+        }
 
         console.log(`📞 Conversation started: ${conversation._id}`);
       } catch (error) {
         console.error('Start conversation error:', error);
-        callback({
-          success: false,
-          error: 'Failed to start conversation'
-        });
+        const cb = typeof callback === 'function' ? callback : data;
+        if (typeof cb === 'function') {
+          cb({
+            success: false,
+            error: 'Failed to start conversation'
+          });
+        }
       }
     });
 
@@ -103,6 +126,19 @@ const initializeSocketHandlers = (io) => {
         // Restore Gemini chat session if needed
         if (conversation.isActive) {
           geminiService.startChat(conversationId);
+          
+          // Set user location for this conversation
+          const userLocation = socket.user.location || {};
+          if (userLocation && userLocation.state) {
+            geminiService.setUserLocation(conversationId, {
+              state: userLocation.state,
+              district: userLocation.district,
+              city: userLocation.city,
+              village: userLocation.village,
+              lat: userLocation.coordinates?.lat,
+              lon: userLocation.coordinates?.lon
+            });
+          }
         }
 
         callback({
@@ -169,8 +205,18 @@ const initializeSocketHandlers = (io) => {
         socket.emit('message:processing', { conversationId });
         console.log('🔄 Processing message, calling Gemini AI...');
 
-        // Get AI response
-        const aiResponse = await geminiService.sendMessage(conversationId, message);
+        // Get user location for context-aware response
+        const userLocation = socket.user.location || {};
+        
+        // Get AI response with location context
+        const aiResponse = await geminiService.sendMessage(conversationId, message, userLocation.state ? {
+          state: userLocation.state,
+          district: userLocation.district,
+          city: userLocation.city,
+          village: userLocation.village,
+          lat: userLocation.coordinates?.lat,
+          lon: userLocation.coordinates?.lon
+        } : null);
         console.log('✅ Got AI response, saving to database...');
 
         // Add AI response to conversation

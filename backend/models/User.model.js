@@ -55,6 +55,59 @@ const userSchema = new mongoose.Schema({
   resetPasswordExpiry: {
     type: Date,
     select: false
+  },
+  // Location fields for personalized data
+  location: {
+    state: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    district: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    city: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    village: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    pincode: {
+      type: String,
+      trim: true,
+      match: [/^[0-9]{6}$/, 'Please provide a valid 6-digit pincode']
+    },
+    coordinates: {
+      lat: { type: Number },
+      lon: { type: Number }
+    }
+  },
+  // Farming preferences
+  farmingProfile: {
+    landSize: {
+      type: Number, // in acres
+      default: 0
+    },
+    primaryCrops: [{
+      type: String,
+      trim: true
+    }],
+    irrigationType: {
+      type: String,
+      enum: ['rainfed', 'canal', 'tubewell', 'drip', 'sprinkler', 'mixed', ''],
+      default: ''
+    },
+    soilType: {
+      type: String,
+      enum: ['clay', 'sandy', 'loamy', 'black', 'red', 'alluvial', 'other', ''],
+      default: ''
+    }
   }
 }, {
   timestamps: true

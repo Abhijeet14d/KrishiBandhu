@@ -315,7 +315,9 @@ const getMe = async (req, res) => {
         name: user.name,
         email: user.email,
         phone: user.phone,
-        isVerified: user.isVerified
+        isVerified: user.isVerified,
+        location: user.location || {},
+        farmingProfile: user.farmingProfile || {}
       }
     });
   } catch (error) {
@@ -356,7 +358,9 @@ const updateProfile = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        phone: user.phone
+        phone: user.phone,
+        location: user.location,
+        farmingProfile: user.farmingProfile
       }
     });
   } catch (error) {
@@ -364,6 +368,91 @@ const updateProfile = async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message || 'Error updating profile'
+    });
+  }
+};
+
+// @desc    Update user location
+// @route   PUT /api/auth/location
+// @access  Private
+const updateLocation = async (req, res) => {
+  try {
+    const { state, district, city, village, pincode, lat, lon } = req.body;
+    
+    const user = await User.findById(req.user.id);
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Update location fields
+    user.location = {
+      state: state || user.location?.state || '',
+      district: district || user.location?.district || '',
+      city: city || user.location?.city || '',
+      village: village || user.location?.village || '',
+      pincode: pincode || user.location?.pincode || '',
+      coordinates: {
+        lat: lat || user.location?.coordinates?.lat,
+        lon: lon || user.location?.coordinates?.lon
+      }
+    };
+    
+    await user.save({ validateModifiedOnly: true });
+
+    res.status(200).json({
+      success: true,
+      message: 'Location updated successfully',
+      location: user.location
+    });
+  } catch (error) {
+    console.error('Update location error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error updating location'
+    });
+  }
+};
+
+// @desc    Update farming profile
+// @route   PUT /api/auth/farming-profile
+// @access  Private
+const updateFarmingProfile = async (req, res) => {
+  try {
+    const { landSize, primaryCrops, irrigationType, soilType } = req.body;
+    
+    const user = await User.findById(req.user.id);
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Update farming profile fields
+    user.farmingProfile = {
+      landSize: landSize || user.farmingProfile?.landSize || 0,
+      primaryCrops: primaryCrops || user.farmingProfile?.primaryCrops || [],
+      irrigationType: irrigationType || user.farmingProfile?.irrigationType || '',
+      soilType: soilType || user.farmingProfile?.soilType || ''
+    };
+    
+    await user.save({ validateModifiedOnly: true });
+
+    res.status(200).json({
+      success: true,
+      message: 'Farming profile updated successfully',
+      farmingProfile: user.farmingProfile
+    });
+  } catch (error) {
+    console.error('Update farming profile error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error updating farming profile'
     });
   }
 };
@@ -525,6 +614,8 @@ module.exports = {
   refreshToken,
   getMe,
   updateProfile,
+  updateLocation,
+  updateFarmingProfile,
   changePassword,
   forgotPassword,
   resetPassword
