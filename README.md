@@ -2,6 +2,8 @@
 
 An intelligent web application that helps farmers get instant answers to their agricultural queries through voice-based conversations powered by Google's Gemini AI.
 
+![alt text](image.png)
+
 ## Features
 
 - **Secure Authentication** - Email verification with OTP, JWT tokens
