@@ -356,9 +356,13 @@ Capstone/
 
 This project is for educational purposes (Capstone Project).
 
-## Author
+## Contributers
 
-Capstone Project - Farmer Assistant
+
+* **[Abhijeet Singh](https://github.com/Abhijeet14d)**
+* **[Adarsh Gupta](https://github.com/Adarsh097)**
+
+
 
 ---
 
