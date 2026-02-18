@@ -242,13 +242,13 @@ const Profile = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 transition-colors">
       {/* Header */}
-      <header className="bg-white shadow-sm">
+      <header className="bg-white dark:bg-gray-800 shadow-sm transition-colors">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center">
           <button
             onClick={() => navigate('/dashboard')}
-            className="flex items-center text-gray-600 hover:text-gray-900"
+            className="flex items-center text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
           >
             <ArrowLeft className="w-5 h-5 mr-2" />
             Back to Dashboard
@@ -258,7 +258,7 @@ const Profile = () => {
 
       {/* Main Content */}
       <main className="max-w-4xl mx-auto px-4 py-8">
-        <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden transition-colors">
           {/* Profile Header */}
           <div className="bg-gradient-to-r from-green-500 to-green-600 px-8 py-12 text-white">
             <div className="flex items-center space-x-6">
@@ -275,7 +275,7 @@ const Profile = () => {
           {/* Profile Form */}
           <div className="p-8">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-gray-900">Profile Information</h2>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Profile Information</h2>
               {!isEditing ? (
                 <button
                   onClick={() => setIsEditing(true)}
@@ -372,26 +372,26 @@ const Profile = () => {
             </div>
 
             {/* Change Password Section */}
-            <div className="mt-8 pt-8 border-t border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Security</h3>
+            <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Security</h3>
               <button
                 onClick={() => setShowPasswordModal(true)}
-                className="flex items-center px-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                className="flex items-center px-4 py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
               >
-                <Lock className="w-5 h-5 text-gray-600 mr-3" />
-                <span className="text-gray-700">Change Password</span>
+                <Lock className="w-5 h-5 text-gray-600 dark:text-gray-400 mr-3" />
+                <span className="text-gray-700 dark:text-gray-300">Change Password</span>
               </button>
             </div>
           </div>
         </div>
 
         {/* Location Section */}
-        <div className="bg-white rounded-2xl shadow-lg overflow-hidden mt-6">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden mt-6 transition-colors">
           <div className="p-8">
             <div className="flex justify-between items-center mb-6">
               <div className="flex items-center">
                 <MapPin className="w-6 h-6 text-green-600 mr-2" />
-                <h2 className="text-xl font-bold text-gray-900">Location</h2>
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Location</h2>
               </div>
               {!isEditingLocation ? (
                 <button
@@ -427,8 +427,8 @@ const Profile = () => {
             </div>
 
             {!user?.location?.state && !isEditingLocation && (
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-                <p className="text-yellow-800 text-sm">
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-4">
+                <p className="text-yellow-800 dark:text-yellow-400 text-sm">
                   ⚠️ Set your location to get personalized market prices, weather updates, and government schemes for your area.
                 </p>
               </div>
@@ -538,12 +538,12 @@ const Profile = () => {
         </div>
 
         {/* Farming Profile Section */}
-        <div className="bg-white rounded-2xl shadow-lg overflow-hidden mt-6">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden mt-6 transition-colors">
           <div className="p-8">
             <div className="flex justify-between items-center mb-6">
               <div className="flex items-center">
                 <Tractor className="w-6 h-6 text-green-600 mr-2" />
-                <h2 className="text-xl font-bold text-gray-900">Farming Profile</h2>
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Farming Profile</h2>
               </div>
               {!isEditingFarming ? (
                 <button
@@ -676,8 +676,8 @@ const Profile = () => {
       {/* Change Password Modal */}
       {showPasswordModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">Change Password</h3>
+          <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full p-6 transition-colors">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Change Password</h3>
             
             <div className="space-y-4">
               <div>

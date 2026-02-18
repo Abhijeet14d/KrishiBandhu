@@ -70,6 +70,16 @@ const initializeSocketHandlers = (io) => {
           });
         }
 
+        // Set farming profile for personalized responses
+        if (socket.user.farmingProfile) {
+          geminiService.setFarmingProfile(conversation._id.toString(), {
+            landSize: socket.user.farmingProfile.landSize,
+            primaryCrops: socket.user.farmingProfile.primaryCrops || [],
+            irrigationType: socket.user.farmingProfile.irrigationType,
+            soilType: socket.user.farmingProfile.soilType
+          });
+        }
+
         const welcomeMessage = geminiService.getWelcomeMessage();
 
         // Add welcome message to conversation
@@ -137,6 +147,16 @@ const initializeSocketHandlers = (io) => {
               village: userLocation.village,
               lat: userLocation.coordinates?.lat,
               lon: userLocation.coordinates?.lon
+            });
+          }
+
+          // Set farming profile for personalized responses
+          if (socket.user.farmingProfile) {
+            geminiService.setFarmingProfile(conversationId, {
+              landSize: socket.user.farmingProfile.landSize,
+              primaryCrops: socket.user.farmingProfile.primaryCrops || [],
+              irrigationType: socket.user.farmingProfile.irrigationType,
+              soilType: socket.user.farmingProfile.soilType
             });
           }
         }

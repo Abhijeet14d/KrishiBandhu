@@ -1,9 +1,11 @@
 import api from './api';
 
 const conversationService = {
-  // Get all conversations
-  getConversations: async () => {
-    const response = await api.get('/conversations');
+  // Get all conversations with pagination and search
+  getConversations: async ({ page = 1, limit = 20, search = '' } = {}) => {
+    const params = { page, limit };
+    if (search) params.search = search;
+    const response = await api.get('/conversations', { params });
     return response.data;
   },
 
@@ -22,6 +24,12 @@ const conversationService = {
   // Send message (REST fallback)
   sendMessage: async (conversationId, message) => {
     const response = await api.post(`/conversations/${conversationId}/message`, { message });
+    return response.data;
+  },
+
+  // Resume an ended conversation
+  resumeConversation: async (conversationId) => {
+    const response = await api.post(`/conversations/${conversationId}/resume`);
     return response.data;
   },
 

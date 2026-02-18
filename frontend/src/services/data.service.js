@@ -60,20 +60,6 @@ export const getWeatherForecast = async (params = {}) => {
 };
 
 /**
- * Get government schemes
- * @param {Object} params - { state, category }
- * @returns {Promise} Schemes data
- */
-export const getGovernmentSchemes = async (params = {}) => {
-  try {
-    const response = await api.get('/data/schemes', { params });
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || { message: 'Failed to fetch government schemes' };
-  }
-};
-
-/**
  * Get farming advice based on weather
  * @returns {Promise} Farming advice data
  */
@@ -119,7 +105,6 @@ export default {
   getMarketPrices,
   getCurrentWeather,
   getWeatherForecast,
-  getGovernmentSchemes,
   getFarmingAdvice,
   updateUserLocation,
   updateFarmingProfile

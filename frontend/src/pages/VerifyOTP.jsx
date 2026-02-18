@@ -96,7 +96,7 @@ const VerifyOTP = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center px-4 transition-colors">
       <div className="max-w-md w-full">
         {/* Back Button */}
         <button
@@ -108,13 +108,13 @@ const VerifyOTP = () => {
         </button>
 
         {/* Verify Card */}
-        <div className="bg-white rounded-2xl shadow-xl p-8">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 transition-colors">
           <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
               <Mail className="w-8 h-8 text-green-600" />
             </div>
-            <h2 className="text-3xl font-bold text-gray-900">Verify Your Email</h2>
-            <p className="text-gray-600 mt-2">
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Verify Your Email</h2>
+            <p className="text-gray-600 dark:text-gray-400 mt-2">
               We've sent a 6-digit code to
               <br />
               <span className="font-semibold">{email}</span>
@@ -133,7 +133,7 @@ const VerifyOTP = () => {
                   value={digit}
                   onChange={(e) => handleChange(index, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(index, e)}
-                  className="w-12 h-14 text-center text-2xl font-bold border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition"
+                  className="w-12 h-14 text-center text-2xl font-bold border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition"
                 />
               ))}
             </div>
@@ -141,7 +141,7 @@ const VerifyOTP = () => {
             {/* Timer */}
             <div className="text-center">
               {timer > 0 ? (
-                <p className="text-gray-600">
+                <p className="text-gray-600 dark:text-gray-400">
                   OTP expires in{' '}
                   <span className="font-semibold text-green-600">{formatTime(timer)}</span>
                 </p>
@@ -169,7 +169,7 @@ const VerifyOTP = () => {
 
           {/* Resend */}
           <div className="text-center mt-6">
-            <p className="text-gray-600">
+            <p className="text-gray-600 dark:text-gray-400">
               Didn't receive the code?{' '}
               <button
                 onClick={handleResend}

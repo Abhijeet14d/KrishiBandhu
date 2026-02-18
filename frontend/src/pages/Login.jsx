@@ -30,22 +30,22 @@ const Login = () => {
 
     try {
       const response = await login(formData);
-      
-      if (response.needsVerification) {
-        toast.error('Please verify your email first');
-        navigate('/verify-otp', { state: { userId: response.userId } });
-        return;
-      }
-
       toast.success('Login successful!');
       navigate('/dashboard');
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Login failed');
+      // Handle unverified user - 403 goes to catch block
+      const responseData = error.response?.data;
+      if (responseData?.needsVerification) {
+        toast.error('Please verify your email first');
+        navigate('/verify-otp', { state: { userId: responseData.userId } });
+        return;
+      }
+      toast.error(responseData?.message || 'Login failed');
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center px-4 transition-colors">
       <div className="max-w-md w-full">
         {/* Back Button */}
         <Link
@@ -57,19 +57,19 @@ const Login = () => {
         </Link>
 
         {/* Login Card */}
-        <div className="bg-white rounded-2xl shadow-xl p-8">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 transition-colors">
           <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
               <span className="text-3xl">🌾</span>
             </div>
-            <h2 className="text-3xl font-bold text-gray-900">Welcome Back</h2>
-            <p className="text-gray-600 mt-2">Login to your account</p>
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Welcome Back</h2>
+            <p className="text-gray-600 dark:text-gray-400 mt-2">Login to your account</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Email */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Email Address
               </label>
               <div className="relative">
@@ -79,7 +79,7 @@ const Login = () => {
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition"
                   placeholder="your@email.com"
                 />
               </div>
@@ -87,7 +87,7 @@ const Login = () => {
 
             {/* Password */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Password
               </label>
               <div className="relative">
@@ -97,7 +97,7 @@ const Login = () => {
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition"
                   placeholder="••••••••"
                 />
               </div>
@@ -126,7 +126,7 @@ const Login = () => {
           </form>
 
           {/* Register Link */}
-          <p className="text-center mt-6 text-gray-600">
+          <p className="text-center mt-6 text-gray-600 dark:text-gray-400">
             Don't have an account?{' '}
             <Link to="/register" className="text-green-600 hover:text-green-700 font-semibold">
               Register here

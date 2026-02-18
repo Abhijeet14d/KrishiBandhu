@@ -28,15 +28,24 @@ class ExternalAPIService {
   }
 
   /**
-   * Get cached data or fetch fresh
+   * Get cached data or fetch fresh (prevents duplicate concurrent fetches)
    */
-  getCachedOrFetch(cacheKey, fetchFn) {
+  async getCachedOrFetch(cacheKey, fetchFn) {
     const cached = this.cache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < this.cacheTTL) {
       console.log(`📦 Cache hit for: ${cacheKey}`);
       return cached.data;
     }
-    return fetchFn();
+    // Check if a fetch is already in progress for this key
+    if (this._pendingFetches && this._pendingFetches.has(cacheKey)) {
+      return this._pendingFetches.get(cacheKey);
+    }
+    if (!this._pendingFetches) this._pendingFetches = new Map();
+    const fetchPromise = fetchFn().finally(() => {
+      this._pendingFetches.delete(cacheKey);
+    });
+    this._pendingFetches.set(cacheKey, fetchPromise);
+    return fetchPromise;
   }
 
   /**
@@ -361,175 +370,6 @@ class ExternalAPIService {
     };
   }
 
-  // ==================== GOVERNMENT SCHEMES APIs ====================
-
-  /**
-   * Fetch government schemes based on criteria
-   * @param {Object} params - { state, category, farmerType }
-   * @returns {Promise<Object>} Schemes data
-   */
-  async getGovernmentSchemes(params = {}) {
-    const { state, category, farmerType } = params;
-    const cacheKey = `schemes_${state}_${category}_${farmerType}`;
-
-    return this.getCachedOrFetch(cacheKey, async () => {
-      try {
-        // Example: Using government API for schemes
-        // Replace with your actual government schemes API
-        const response = await axios.get(`${this.governmentSchemeAPI.baseURL}/schemes`, {
-          params: {
-            'api-key': this.governmentSchemeAPI.apiKey,
-            format: 'json',
-            state: state,
-            category: category
-          },
-          timeout: 10000
-        });
-
-        const data = this.formatSchemesData(response.data, state);
-        this.setCache(cacheKey, data);
-        return data;
-      } catch (error) {
-        console.error('❌ Government Schemes API Error:', error.message);
-        return this.getMockGovernmentSchemes(state, category);
-      }
-    });
-  }
-
-  /**
-   * Format schemes data
-   */
-  formatSchemesData(rawData, state) {
-    if (!rawData || !rawData.records) {
-      return this.getMockGovernmentSchemes(state);
-    }
-
-    const schemes = rawData.records.map(record => ({
-      name: record.scheme_name,
-      description: record.description,
-      benefits: record.benefits,
-      eligibility: record.eligibility,
-      applicationProcess: record.application_process,
-      deadline: record.deadline,
-      ministry: record.ministry,
-      state: record.state || 'All India',
-      category: record.category,
-      subsidyAmount: record.subsidy_amount,
-      link: record.application_link
-    }));
-
-    return {
-      schemes,
-      totalSchemes: schemes.length,
-      summary: `Found ${schemes.length} government schemes for farmers`,
-      lastUpdated: new Date().toISOString()
-    };
-  }
-
-  /**
-   * Mock government schemes for testing/fallback
-   */
-  getMockGovernmentSchemes(state, category) {
-    const schemes = [
-      {
-        name: 'PM-KISAN (Pradhan Mantri Kisan Samman Nidhi)',
-        description: 'Direct income support of ₹6,000 per year to farmer families',
-        benefits: '₹6,000 per year in 3 equal installments',
-        eligibility: 'All land-holding farmer families',
-        applicationProcess: 'Apply online at pmkisan.gov.in or through CSC centers',
-        ministry: 'Ministry of Agriculture',
-        state: 'All India',
-        category: 'Income Support',
-        subsidyAmount: '₹6,000/year',
-        link: 'https://pmkisan.gov.in'
-      },
-      {
-        name: 'PM Fasal Bima Yojana (PMFBY)',
-        description: 'Crop insurance scheme to protect farmers against crop loss',
-        benefits: 'Insurance coverage for crop loss due to natural calamities',
-        eligibility: 'All farmers growing notified crops',
-        applicationProcess: 'Apply through bank, CSC or PMFBY portal',
-        ministry: 'Ministry of Agriculture',
-        state: 'All India',
-        category: 'Crop Insurance',
-        subsidyAmount: 'Premium subsidy up to 98%',
-        link: 'https://pmfby.gov.in'
-      },
-      {
-        name: 'Kisan Credit Card (KCC)',
-        description: 'Provides farmers with affordable credit for agricultural needs',
-        benefits: 'Credit at 4% interest rate (with timely repayment)',
-        eligibility: 'All farmers, sharecroppers, tenant farmers',
-        applicationProcess: 'Apply at any bank branch with land documents',
-        ministry: 'Ministry of Finance',
-        state: 'All India',
-        category: 'Credit/Loan',
-        subsidyAmount: 'Interest subvention of 3%',
-        link: 'https://www.nabard.org'
-      },
-      {
-        name: 'Soil Health Card Scheme',
-        description: 'Provides soil health cards with crop-wise nutrient recommendations',
-        benefits: 'Free soil testing and recommendations',
-        eligibility: 'All farmers',
-        applicationProcess: 'Contact nearest Krishi Vigyan Kendra or agriculture office',
-        ministry: 'Ministry of Agriculture',
-        state: 'All India',
-        category: 'Soil Health',
-        subsidyAmount: 'Free service',
-        link: 'https://soilhealth.dac.gov.in'
-      },
-      {
-        name: 'PM Krishi Sinchai Yojana (PMKSY)',
-        description: 'Promotes efficient water use through micro-irrigation',
-        benefits: 'Subsidy on drip and sprinkler irrigation systems',
-        eligibility: 'All farmers',
-        applicationProcess: 'Apply through state agriculture department',
-        ministry: 'Ministry of Agriculture',
-        state: state || 'All India',
-        category: 'Irrigation',
-        subsidyAmount: 'Up to 55-90% subsidy',
-        link: 'https://pmksy.gov.in'
-      },
-      {
-        name: 'National Mission on Sustainable Agriculture (NMSA)',
-        description: 'Promotes sustainable farming practices',
-        benefits: 'Training and financial support for sustainable practices',
-        eligibility: 'All farmers adopting sustainable practices',
-        applicationProcess: 'Contact district agriculture officer',
-        ministry: 'Ministry of Agriculture',
-        state: 'All India',
-        category: 'Sustainable Farming',
-        subsidyAmount: 'Varies by component',
-        link: 'https://nmsa.dac.gov.in'
-      }
-    ];
-
-    // Add state-specific schemes
-    if (state) {
-      schemes.push({
-        name: `${state} Kisan Kalyan Yojana`,
-        description: `State-specific welfare scheme for farmers in ${state}`,
-        benefits: 'Additional financial support and subsidies',
-        eligibility: `Farmers residing in ${state}`,
-        applicationProcess: 'Apply through state agriculture portal',
-        ministry: `${state} Agriculture Department`,
-        state: state,
-        category: 'State Scheme',
-        subsidyAmount: 'Varies',
-        link: '#'
-      });
-    }
-
-    return {
-      schemes,
-      totalSchemes: schemes.length,
-      summary: `Found ${schemes.length} government schemes for farmers${state ? ` in ${state}` : ''}`,
-      lastUpdated: new Date().toISOString(),
-      isMockData: true
-    };
-  }
-
   // ==================== COMBINED DATA FETCHING ====================
 
   /**
@@ -544,11 +384,10 @@ class ExternalAPIService {
 
     try {
       // Fetch all data in parallel
-      const [marketData, weatherData, forecastData, schemesData] = await Promise.all([
+      const [marketData, weatherData, forecastData] = await Promise.all([
         this.getMarketPrices({ state, district }),
         this.getCurrentWeather({ lat, lon, city: city || district, state }),
-        this.getWeatherForecast({ lat, lon, city: city || district, state }),
-        this.getGovernmentSchemes({ state })
+        this.getWeatherForecast({ lat, lon, city: city || district, state })
       ]);
 
       return {
@@ -557,7 +396,6 @@ class ExternalAPIService {
         marketPrices: marketData,
         currentWeather: weatherData,
         weatherForecast: forecastData,
-        governmentSchemes: schemesData,
         fetchedAt: new Date().toISOString()
       };
     } catch (error) {

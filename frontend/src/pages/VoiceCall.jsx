@@ -11,7 +11,8 @@ import {
   Loader2,
   MessageCircle,
   Settings,
-  X
+  X,
+  AlertTriangle
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useAuthStore from '../store/authStore';
@@ -44,6 +45,22 @@ const VoiceCall = () => {
   const [showVoiceSettings, setShowVoiceSettings] = useState(false);
   const [speechRate, setSpeechRate] = useState(0.9);
   const [speechPitch, setSpeechPitch] = useState(1);
+  const [browserWarning, setBrowserWarning] = useState('');
+
+  // Check browser compatibility
+  useEffect(() => {
+    const ua = navigator.userAgent;
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      if (/Firefox/i.test(ua)) {
+        setBrowserWarning('Firefox does not support the Web Speech API. Please use Google Chrome or Microsoft Edge for the best experience.');
+      } else if (/Safari/i.test(ua) && !/Chrome/i.test(ua)) {
+        setBrowserWarning('Safari has limited Web Speech API support. For the best experience, please use Google Chrome or Microsoft Edge.');
+      } else {
+        setBrowserWarning('Your browser does not support speech recognition. Please use Google Chrome or Microsoft Edge.');
+      }
+    }
+  }, []);
 
   // Refs
   const recognitionRef = useRef(null);
@@ -471,6 +488,17 @@ const VoiceCall = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 flex flex-col">
+      {/* Browser Compatibility Warning */}
+      {browserWarning && (
+        <div className="bg-yellow-600/90 text-white px-4 py-3 flex items-center justify-center gap-3 text-sm">
+          <AlertTriangle className="w-5 h-5 flex-shrink-0" />
+          <span>{browserWarning}</span>
+          <button onClick={() => setBrowserWarning('')} className="ml-2 hover:text-yellow-200">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       {/* Voice Settings Modal */}
       {showVoiceSettings && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">

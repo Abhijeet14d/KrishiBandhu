@@ -42,6 +42,7 @@ class GeminiService {
     this.initializeModel();
     this.chatSessions = new Map(); // Store chat sessions by conversation ID
     this.userLocations = new Map(); // Store user locations by conversation ID
+    this.userFarmingProfiles = new Map(); // Store farming profiles by conversation ID
   }
 
   initializeModel() {
@@ -75,6 +76,51 @@ class GeminiService {
     return this.userLocations.get(conversationId) || null;
   }
 
+  /**
+   * Set farming profile for a conversation
+   * @param {string} conversationId - Conversation ID
+   * @param {Object} profile - Farming profile { landSize, primaryCrops, irrigationType, soilType }
+   */
+  setFarmingProfile(conversationId, profile) {
+    this.userFarmingProfiles.set(conversationId, profile);
+    console.log(`🌾 Farming profile set for conversation ${conversationId}:`, profile);
+  }
+
+  /**
+   * Get farming profile for a conversation
+   * @param {string} conversationId - Conversation ID
+   * @returns {Object|null} Farming profile
+   */
+  getFarmingProfile(conversationId) {
+    return this.userFarmingProfiles.get(conversationId) || null;
+  }
+
+  /**
+   * Build a farming context string from profile + location
+   * @param {string} conversationId
+   * @returns {string} Context string to prepend
+   */
+  _buildFarmerContext(conversationId) {
+    const profile = this.getFarmingProfile(conversationId);
+    const location = this.getUserLocation(conversationId);
+    const parts = [];
+
+    if (location && location.state) {
+      const locParts = [location.village, location.city, location.district, location.state].filter(Boolean);
+      parts.push(`Farmer's location: ${locParts.join(', ')}`);
+    }
+
+    if (profile) {
+      if (profile.landSize) parts.push(`Land size: ${profile.landSize} acres`);
+      if (profile.primaryCrops && profile.primaryCrops.length) parts.push(`Primary crops: ${profile.primaryCrops.join(', ')}`);
+      if (profile.irrigationType) parts.push(`Irrigation: ${profile.irrigationType}`);
+      if (profile.soilType) parts.push(`Soil type: ${profile.soilType}`);
+    }
+
+    if (parts.length === 0) return '';
+    return `\n\n[FARMER CONTEXT - use this to personalize your response]\n${parts.join('\n')}\n[END FARMER CONTEXT]\n\n`;
+  }
+
   // Switch to next available model if quota exceeded
   switchToNextModel() {
     if (this.currentModelIndex < AVAILABLE_MODELS.length - 1) {
@@ -89,22 +135,25 @@ class GeminiService {
   /**
    * Start a new chat session for a conversation
    * @param {string} conversationId - Unique conversation identifier
+   * @param {Array} existingHistory - Optional existing chat history for resuming
    * @returns {Object} Chat session
    */
-  startChat(conversationId) {
+  startChat(conversationId, existingHistory = null) {
+    const defaultHistory = [
+      {
+        role: 'user',
+        parts: [{ text: 'You are my agricultural assistant. Please help me with farming queries.' }]
+      },
+      {
+        role: 'model',
+        parts: [{ text: 'Namaste! I am your assistant. How can I assist you today?' }]
+      }
+    ];
+
     const chat = this.model.startChat({
-      history: [
-        {
-          role: 'user',
-          parts: [{ text: 'You are my agricultural assistant. Please help me with farming queries.' }]
-        },
-        {
-          role: 'model',
-          parts: [{ text: 'Namaste! I am your assistant. How can I assist you today?' }]
-        }
-      ],
+      history: existingHistory || defaultHistory,
       generationConfig: {
-        maxOutputTokens: 500,
+        maxOutputTokens: 1500,
         temperature: 0.7,
       }
     });
@@ -139,8 +188,11 @@ class GeminiService {
       // Get location from parameter or stored location
       const location = userLocation || this.getUserLocation(conversationId);
       
+      // Build farmer context (location + farming profile)
+      const farmerContext = this._buildFarmerContext(conversationId);
+
       // Fetch relevant external data if location is available
-      let enrichedMessage = message;
+      let enrichedMessage = farmerContext + message;
       let externalData = null;
       
       if (location && location.state) {
@@ -173,7 +225,7 @@ class GeminiService {
         // Try switching to another model
         if (this.switchToNextModel()) {
           console.log(`🔄 Switched to model: ${AVAILABLE_MODELS[this.currentModelIndex]}, retrying...`);
-          return this.sendMessage(conversationId, message, retryCount + 1);
+          return this.sendMessage(conversationId, message, userLocation, retryCount + 1);
         }
         
         // If all models exhausted, wait and retry once
@@ -182,7 +234,7 @@ class GeminiService {
           await new Promise(resolve => setTimeout(resolve, 40000));
           this.currentModelIndex = 0; // Reset to first model
           this.initializeModel();
-          return this.sendMessage(conversationId, message, null, retryCount + 1);
+          return this.sendMessage(conversationId, message, userLocation, retryCount + 1);
         }
         
         throw new Error('API quota exceeded. Please try again in a few minutes or check your API billing settings.');
@@ -216,6 +268,7 @@ class GeminiService {
   endChat(conversationId) {
     this.chatSessions.delete(conversationId);
     this.userLocations.delete(conversationId);
+    this.userFarmingProfiles.delete(conversationId);
   }
 
   /**

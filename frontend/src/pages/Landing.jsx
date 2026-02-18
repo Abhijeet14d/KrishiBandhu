@@ -3,16 +3,16 @@ import { Phone, CheckCircle, Shield, Headphones } from 'lucide-react';
 
 const Landing = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 transition-colors">
       {/* Navigation */}
-      <nav className="bg-white shadow-sm">
+      <nav className="bg-white dark:bg-gray-800 shadow-sm transition-colors">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-2">
               <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
                 <Phone className="w-6 h-6 text-white" />
               </div>
-              <span className="text-2xl font-bold text-gray-900">
+              <span className="text-2xl font-bold text-gray-900 dark:text-white">
                 Farmer Assistant
               </span>
             </div>
@@ -37,12 +37,12 @@ const Landing = () => {
       {/* Hero Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="text-center">
-          <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
+          <h1 className="text-5xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6">
             Your Agricultural Assistant
             <br />
             <span className="text-green-600">Available 24/7</span>
           </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+          <p className="text-xl text-gray-600 dark:text-gray-400 mb-8 max-w-3xl mx-auto">
             Get instant answers to all your farming queries through voice calls powered by AI. 
             No more waiting, no more confusion - just ask and get expert guidance.
           </p>
@@ -57,79 +57,79 @@ const Landing = () => {
 
         {/* Features */}
         <div className="mt-24 grid md:grid-cols-3 gap-8">
-          <div className="bg-white rounded-xl p-8 shadow-md hover:shadow-lg transition-shadow">
-            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-md hover:shadow-lg transition-shadow">
+            <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center mb-4">
               <Headphones className="w-6 h-6 text-green-600" />
             </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
               Voice-Based Queries
             </h3>
-            <p className="text-gray-600">
+            <p className="text-gray-600 dark:text-gray-400">
               Simply speak your questions in your preferred language and get instant voice responses.
             </p>
           </div>
 
-          <div className="bg-white rounded-xl p-8 shadow-md hover:shadow-lg transition-shadow">
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-md hover:shadow-lg transition-shadow">
+            <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center mb-4">
               <CheckCircle className="w-6 h-6 text-blue-600" />
             </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
               AI-Powered Answers
             </h3>
-            <p className="text-gray-600">
+            <p className="text-gray-600 dark:text-gray-400">
               Get accurate agricultural advice powered by advanced AI trained on farming knowledge.
             </p>
           </div>
 
-          <div className="bg-white rounded-xl p-8 shadow-md hover:shadow-lg transition-shadow">
-            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-md hover:shadow-lg transition-shadow">
+            <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center mb-4">
               <Shield className="w-6 h-6 text-purple-600" />
             </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
               Secure & Private
             </h3>
-            <p className="text-gray-600">
+            <p className="text-gray-600 dark:text-gray-400">
               Your conversations are encrypted and secure. Your privacy is our top priority.
             </p>
           </div>
         </div>
 
         {/* How It Works */}
-        <div className="mt-24 bg-white rounded-2xl p-12 shadow-lg">
-          <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
+        <div className="mt-24 bg-white dark:bg-gray-800 rounded-2xl p-12 shadow-lg transition-colors">
+          <h2 className="text-3xl font-bold text-center text-gray-900 dark:text-white mb-12">
             How It Works
           </h2>
           <div className="grid md:grid-cols-4 gap-8">
             <div className="text-center">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-2xl font-bold text-green-600">1</span>
               </div>
-              <h4 className="font-semibold text-gray-900 mb-2">Register</h4>
-              <p className="text-gray-600 text-sm">Create your free account in seconds</p>
+              <h4 className="font-semibold text-gray-900 dark:text-white mb-2">Register</h4>
+              <p className="text-gray-600 dark:text-gray-400 text-sm">Create your free account in seconds</p>
             </div>
 
             <div className="text-center">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-2xl font-bold text-green-600">2</span>
               </div>
-              <h4 className="font-semibold text-gray-900 mb-2">Call</h4>
-              <p className="text-gray-600 text-sm">Start a voice call from dashboard</p>
+              <h4 className="font-semibold text-gray-900 dark:text-white mb-2">Call</h4>
+              <p className="text-gray-600 dark:text-gray-400 text-sm">Start a voice call from dashboard</p>
             </div>
 
             <div className="text-center">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-2xl font-bold text-green-600">3</span>
               </div>
-              <h4 className="font-semibold text-gray-900 mb-2">Ask</h4>
-              <p className="text-gray-600 text-sm">Speak your farming questions</p>
+              <h4 className="font-semibold text-gray-900 dark:text-white mb-2">Ask</h4>
+              <p className="text-gray-600 dark:text-gray-400 text-sm">Speak your farming questions</p>
             </div>
 
             <div className="text-center">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-2xl font-bold text-green-600">4</span>
               </div>
-              <h4 className="font-semibold text-gray-900 mb-2">Get Answers</h4>
-              <p className="text-gray-600 text-sm">Receive expert guidance instantly</p>
+              <h4 className="font-semibold text-gray-900 dark:text-white mb-2">Get Answers</h4>
+              <p className="text-gray-600 dark:text-gray-400 text-sm">Receive expert guidance instantly</p>
             </div>
           </div>
         </div>

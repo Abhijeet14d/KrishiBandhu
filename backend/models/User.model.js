@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -28,8 +29,13 @@ const userSchema = new mongoose.Schema({
   password: {
     type: String,
     required: [true, 'Please provide a password'],
-    minlength: [6, 'Password must be at least 6 characters'],
+    minlength: [8, 'Password must be at least 8 characters'],
     select: false
+  },
+  role: {
+    type: String,
+    enum: ['user', 'admin'],
+    default: 'user'
   },
   isVerified: {
     type: Boolean,
@@ -115,12 +121,15 @@ const userSchema = new mongoose.Schema({
 
 // Hash password before saving
 userSchema.pre('save', async function() {
-  if (!this.isModified('password')) {
-    return;
+  if (this.isModified('password')) {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
   }
-  
-  const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
+  // Hash OTP before saving
+  if (this.isModified('otp') && this.otp) {
+    const salt = await bcrypt.genSalt(10);
+    this.otp = await bcrypt.hash(this.otp, salt);
+  }
 });
 
 // Method to compare password
@@ -128,17 +137,17 @@ userSchema.methods.comparePassword = async function(candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
-// Method to generate OTP
+// Method to generate OTP (cryptographically secure)
 userSchema.methods.generateOTP = function() {
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  this.otp = otp;
+  const otp = crypto.randomInt(100000, 999999).toString();
+  this.otp = otp; // Will be hashed by pre-save hook
   this.otpExpiry = new Date(Date.now() + parseInt(process.env.OTP_EXPIRE_MINUTES) * 60 * 1000);
   this.otpAttempts = 0;
   return otp;
 };
 
-// Method to verify OTP
-userSchema.methods.verifyOTP = function(candidateOTP) {
+// Method to verify OTP (compares against hashed OTP)
+userSchema.methods.verifyOTP = async function(candidateOTP) {
   if (!this.otp || !this.otpExpiry) {
     return { valid: false, message: 'No OTP found' };
   }
@@ -151,7 +160,8 @@ userSchema.methods.verifyOTP = function(candidateOTP) {
     return { valid: false, message: 'Too many attempts. Please request a new OTP' };
   }
   
-  if (this.otp !== candidateOTP) {
+  const isMatch = await bcrypt.compare(candidateOTP, this.otp);
+  if (!isMatch) {
     this.otpAttempts += 1;
     return { valid: false, message: 'Invalid OTP', attemptsLeft: 5 - this.otpAttempts };
   }
@@ -161,7 +171,6 @@ userSchema.methods.verifyOTP = function(candidateOTP) {
 
 // Method to generate password reset token
 userSchema.methods.generateResetToken = function() {
-  const crypto = require('crypto');
   const resetToken = crypto.randomBytes(32).toString('hex');
   this.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
   this.resetPasswordExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour

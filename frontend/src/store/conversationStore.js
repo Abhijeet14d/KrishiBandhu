@@ -7,18 +7,46 @@ const useConversationStore = create((set, get) => ({
   messages: [],
   isLoading: false,
   error: null,
+  pagination: {
+    page: 1,
+    totalPages: 1,
+    total: 0,
+    hasMore: false
+  },
 
-  // Fetch all conversations
-  fetchConversations: async () => {
+  // Fetch all conversations (with optional pagination/search)
+  fetchConversations: async (params = {}) => {
     set({ isLoading: true, error: null });
     try {
-      const data = await conversationService.getConversations();
-      set({ conversations: data.conversations, isLoading: false });
-      return data.conversations;
+      const data = await conversationService.getConversations(params);
+      const newConversations = data.conversations;
+      
+      // If loading more pages, append; otherwise replace
+      if (params.page && params.page > 1) {
+        set((state) => ({
+          conversations: [...state.conversations, ...newConversations],
+          pagination: data.pagination || { page: 1, totalPages: 1, total: newConversations.length, hasMore: false },
+          isLoading: false
+        }));
+      } else {
+        set({
+          conversations: newConversations,
+          pagination: data.pagination || { page: 1, totalPages: 1, total: newConversations.length, hasMore: false },
+          isLoading: false
+        });
+      }
+      return newConversations;
     } catch (error) {
       set({ error: error.message, isLoading: false });
       throw error;
     }
+  },
+
+  // Load more conversations
+  loadMore: async () => {
+    const { pagination } = get();
+    if (!pagination.hasMore) return;
+    return get().fetchConversations({ page: pagination.page + 1 });
   },
 
   // Set current conversation

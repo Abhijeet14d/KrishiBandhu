@@ -15,12 +15,15 @@ import {
   ExternalLink,
   Loader2,
   AlertCircle,
-  RefreshCw
+  RefreshCw,
+  MessageSquare,
+  Moon
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import useAuthStore from '../store/authStore';
 import useConversationStore from '../store/conversationStore';
 import dataService from '../services/data.service';
+import adminService from '../services/admin.service';
 
 // Weather icon mapping
 const getWeatherIcon = (condition) => {
@@ -39,51 +42,19 @@ const Dashboard = () => {
   const [schemes, setSchemes] = useState([]);
   const [isLoadingWeather, setIsLoadingWeather] = useState(true);
   const [isLoadingSchemes, setIsLoadingSchemes] = useState(true);
+  const [darkMode, setDarkMode] = useState(() => {
+    return localStorage.getItem('darkMode') === 'true';
+  });
 
-  const getMockSchemes = () => [
-    {
-      name: 'PM-KISAN',
-      description: 'Direct income support of ₹6,000 per year to farmer families',
-      benefits: '₹6,000 per year in 3 installments',
-      category: 'Income Support',
-      link: 'https://pmkisan.gov.in'
-    },
-    {
-      name: 'PM Fasal Bima Yojana',
-      description: 'Crop insurance scheme to protect against crop loss',
-      benefits: 'Insurance coverage up to 98% premium subsidy',
-      category: 'Crop Insurance',
-      link: 'https://pmfby.gov.in'
-    },
-    {
-      name: 'Kisan Credit Card',
-      description: 'Affordable credit for agricultural needs',
-      benefits: 'Credit at 4% interest rate',
-      category: 'Credit/Loan',
-      link: 'https://www.nabard.org'
-    },
-    {
-      name: 'PM Krishi Sinchai Yojana',
-      description: 'Promotes efficient water use through micro-irrigation',
-      benefits: 'Up to 55-90% subsidy on irrigation',
-      category: 'Irrigation',
-      link: 'https://pmksy.gov.in'
-    },
-    {
-      name: 'Soil Health Card',
-      description: 'Free soil testing and crop-wise nutrient recommendations',
-      benefits: 'Free soil testing service',
-      category: 'Soil Health',
-      link: 'https://soilhealth.dac.gov.in'
-    },
-    {
-      name: 'National Mission on Sustainable Agriculture',
-      description: 'Promotes sustainable farming practices and climate resilience',
-      benefits: 'Training and financial support',
-      category: 'Sustainable Farming',
-      link: 'https://nmsa.dac.gov.in'
+  // Toggle dark mode
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
     }
-  ];
+    localStorage.setItem('darkMode', darkMode);
+  }, [darkMode]);
 
   useEffect(() => {
     fetchConversations().catch(console.error);
@@ -123,15 +94,15 @@ const Dashboard = () => {
   const fetchSchemesData = async () => {
     setIsLoadingSchemes(true);
     try {
-      const response = await dataService.getGovernmentSchemes();
-      if (response.success && response.data?.schemes?.length > 0) {
-        setSchemes(response.data.schemes);
+      const response = await adminService.getPublicSchemes();
+      if (response.success && response.data?.length > 0) {
+        setSchemes(response.data);
       } else {
-        setSchemes(getMockSchemes());
+        setSchemes([]);
       }
     } catch (error) {
       console.error('Schemes fetch error:', error);
-      setSchemes(getMockSchemes());
+      setSchemes([]);
     } finally {
       setIsLoadingSchemes(false);
     }
@@ -149,21 +120,28 @@ const Dashboard = () => {
   const hasLocation = user?.location?.state;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 transition-colors">
       {/* Navigation */}
-      <nav className="bg-white shadow-sm">
+      <nav className="bg-white dark:bg-gray-800 shadow-sm transition-colors">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-2">
               <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
                 <Phone className="w-6 h-6 text-white" />
               </div>
-              <span className="text-2xl font-bold text-gray-900">
+              <span className="text-2xl font-bold text-gray-900 dark:text-white">
                 Farmer Assistant
               </span>
             </div>
             <div className="flex items-center space-x-4">
-              <span className="text-gray-700 font-medium">
+              <button
+                onClick={() => setDarkMode(!darkMode)}
+                className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                title="Toggle dark mode"
+              >
+                {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+              </button>
+              <span className="text-gray-700 dark:text-gray-300 font-medium">
                 Welcome, {user?.name}
               </span>
               <button
@@ -285,7 +263,7 @@ const Dashboard = () => {
         </div>
 
         {/* Quick Actions */}
-        <div className="grid md:grid-cols-3 gap-6 mb-6">
+        <div className="grid md:grid-cols-4 gap-6 mb-6">
           {/* Start Call */}
           <button 
             onClick={handleStartCall}
@@ -295,9 +273,25 @@ const Dashboard = () => {
               <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mb-4">
                 <Phone className="w-8 h-8" />
               </div>
-              <h3 className="text-2xl font-bold mb-2">Start Call</h3>
+              <h3 className="text-2xl font-bold mb-2">Voice Call</h3>
               <p className="text-green-100">
-                Begin voice conversation with AI assistant
+                Speak with AI assistant
+              </p>
+            </div>
+          </button>
+
+          {/* Text Chat */}
+          <button 
+            onClick={() => navigate('/chat')}
+            className="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1"
+          >
+            <div className="flex flex-col items-center text-center">
+              <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mb-4">
+                <MessageSquare className="w-8 h-8" />
+              </div>
+              <h3 className="text-2xl font-bold mb-2">Text Chat</h3>
+              <p className="text-blue-100">
+                Type your farming questions
               </p>
             </div>
           </button>
@@ -305,14 +299,14 @@ const Dashboard = () => {
           {/* History */}
           <button 
             onClick={() => navigate('/history')}
-            className="bg-white rounded-2xl p-8 shadow-md hover:shadow-lg transition-shadow"
+            className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-md hover:shadow-lg transition-shadow"
           >
             <div className="flex flex-col items-center text-center">
-              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                <History className="w-8 h-8 text-blue-600" />
+              <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mb-4">
+                <History className="w-8 h-8 text-blue-600 dark:text-blue-400" />
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">History</h3>
-              <p className="text-gray-600">
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">History</h3>
+              <p className="text-gray-600 dark:text-gray-400">
                 {conversations.length} conversation{conversations.length !== 1 ? 's' : ''}
               </p>
             </div>
@@ -321,14 +315,14 @@ const Dashboard = () => {
           {/* Profile */}
           <button 
             onClick={() => navigate('/profile')}
-            className="bg-white rounded-2xl p-8 shadow-md hover:shadow-lg transition-shadow"
+            className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-md hover:shadow-lg transition-shadow"
           >
             <div className="flex flex-col items-center text-center">
-              <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mb-4">
-                <UserIcon className="w-8 h-8 text-purple-600" />
+              <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center mb-4">
+                <UserIcon className="w-8 h-8 text-purple-600 dark:text-purple-400" />
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">Profile</h3>
-              <p className="text-gray-600">
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Profile</h3>
+              <p className="text-gray-600 dark:text-gray-400">
                 Manage your account settings
               </p>
             </div>
@@ -336,18 +330,18 @@ const Dashboard = () => {
         </div>
 
         {/* Government Schemes Section */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mb-8 transition-colors">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center">
               <FileText className="w-6 h-6 text-green-600 mr-2" />
-              <h2 className="text-xl font-bold text-gray-900">Government Schemes for Farmers</h2>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Government Schemes for Farmers</h2>
             </div>
             <button 
               onClick={fetchSchemesData}
-              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
               title="Refresh schemes"
             >
-              <RefreshCw className={`w-4 h-4 text-gray-500 ${isLoadingSchemes ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-4 h-4 text-gray-500 dark:text-gray-400 ${isLoadingSchemes ? 'animate-spin' : ''}`} />
             </button>
           </div>
 
@@ -355,31 +349,43 @@ const Dashboard = () => {
             <div className="flex items-center justify-center py-8">
               <Loader2 className="w-8 h-8 animate-spin text-green-600" />
             </div>
+          ) : schemes.length === 0 ? (
+            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+              <FileText className="w-10 h-10 mx-auto mb-2 opacity-50" />
+              <p>No schemes available at the moment</p>
+            </div>
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {schemes.slice(0, 6).map((scheme, index) => (
+              {schemes.map((scheme) => (
                 <div 
-                  key={index}
-                  className="border border-gray-200 rounded-xl p-4 hover:border-green-300 hover:shadow-md transition-all"
+                  key={scheme._id}
+                  className="border border-gray-200 dark:border-gray-600 rounded-xl p-4 hover:border-green-300 dark:hover:border-green-500 hover:shadow-md transition-all bg-white dark:bg-gray-700"
                 >
                   <div className="flex items-start justify-between mb-2">
-                    <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded">
-                      {scheme.category}
+                    <span className="text-xs font-medium text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30 px-2 py-1 rounded">
+                      {scheme.category || 'General'}
+                    </span>
+                    <span className={`text-xs font-medium px-2 py-1 rounded ${
+                      scheme.type === 'central'
+                        ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+                        : 'bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400'
+                    }`}>
+                      {scheme.type === 'central' ? '🇮🇳 Central' : `📍 ${scheme.state}`}
                     </span>
                   </div>
-                  <h3 className="font-semibold text-gray-900 mb-2">{scheme.name}</h3>
-                  <p className="text-sm text-gray-600 mb-3 line-clamp-2">{scheme.description}</p>
+                  <h3 className="font-semibold text-gray-900 dark:text-white mb-2">{scheme.title}</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-300 mb-3 line-clamp-2">{scheme.description}</p>
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-500">
-                      💰 {scheme.benefits}
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                      {scheme.benefits ? `💰 ${scheme.benefits}` : ''}
                     </span>
                     {scheme.link && (
                       <a 
                         href={scheme.link}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-green-600 hover:text-green-700 p-1"
-                        title="Learn more"
+                        className="text-green-600 dark:text-green-400 hover:text-green-700 p-1"
+                        title="Visit government portal"
                       >
                         <ExternalLink className="w-4 h-4" />
                       </a>

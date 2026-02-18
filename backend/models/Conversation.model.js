@@ -10,6 +10,14 @@ const messageSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  messageType: {
+    type: String,
+    enum: ['text', 'image', 'audio'],
+    default: 'text'
+  },
+  imageUrl: {
+    type: String
+  },
   timestamp: {
     type: Date,
     default: Date.now
@@ -27,6 +35,11 @@ const conversationSchema = new mongoose.Schema({
     default: 'New Conversation'
   },
   messages: [messageSchema],
+  mode: {
+    type: String,
+    enum: ['voice', 'text', 'continued'],
+    default: 'voice'
+  },
   isActive: {
     type: Boolean,
     default: true
@@ -45,6 +58,10 @@ const conversationSchema = new mongoose.Schema({
 }, {
   timestamps: true
 });
+
+// Add indexes for performance
+conversationSchema.index({ user: 1, createdAt: -1 });
+conversationSchema.index({ user: 1, isActive: 1 });
 
 // Generate title from first user message
 conversationSchema.methods.generateTitle = function() {

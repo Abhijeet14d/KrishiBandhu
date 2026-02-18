@@ -96,7 +96,7 @@ const verifyOTP = async (req, res) => {
       });
     }
 
-    const verification = user.verifyOTP(otp);
+    const verification = await user.verifyOTP(otp);
     
     if (!verification.valid) {
       await user.save();
@@ -256,16 +256,16 @@ const login = async (req, res) => {
 // @access  Public
 const refreshToken = async (req, res) => {
   try {
-    const { refreshToken } = req.body;
+    const { refreshToken: tokenFromBody } = req.body;
 
-    if (!refreshToken) {
+    if (!tokenFromBody) {
       return res.status(401).json({
         success: false,
         message: 'Refresh token required'
       });
     }
 
-    const decoded = verifyRefreshToken(refreshToken);
+    const decoded = verifyRefreshToken(tokenFromBody);
     
     if (!decoded) {
       return res.status(401).json({
@@ -522,10 +522,11 @@ const forgotPassword = async (req, res) => {
     
     const user = await User.findOne({ email });
     
+    // Always return success to prevent user enumeration
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'No account found with this email'
+      return res.status(200).json({
+        success: true,
+        message: 'If an account exists with this email, a reset link has been sent'
       });
     }
 
@@ -553,7 +554,7 @@ const forgotPassword = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: 'Password reset link sent to your email'
+      message: 'If an account exists with this email, a reset link has been sent'
     });
   } catch (error) {
     console.error('Forgot password error:', error);

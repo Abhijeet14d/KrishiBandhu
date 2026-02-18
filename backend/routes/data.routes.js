@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { protect } = require('../middleware/auth.middleware');
+const { adminOnly } = require('../middleware/admin.middleware');
 const externalAPIService = require('../services/externalAPI.service');
 const dataAggregatorService = require('../services/dataAggregator.service');
 
@@ -131,34 +132,6 @@ router.get('/weather/forecast', protect, async (req, res) => {
 });
 
 /**
- * @desc    Get government schemes
- * @route   GET /api/data/schemes
- * @access  Private
- */
-router.get('/schemes', protect, async (req, res) => {
-  try {
-    const { state, category } = req.query;
-    const userLocation = req.user.location || {};
-
-    const schemesData = await externalAPIService.getGovernmentSchemes({
-      state: state || userLocation.state,
-      category: category
-    });
-
-    res.status(200).json({
-      success: true,
-      data: schemesData
-    });
-  } catch (error) {
-    console.error('Schemes data error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching government schemes'
-    });
-  }
-});
-
-/**
  * @desc    Get farming advice based on weather
  * @route   GET /api/data/farming-advice
  * @access  Private
@@ -200,7 +173,7 @@ router.get('/farming-advice', protect, async (req, res) => {
  * @route   POST /api/data/clear-cache
  * @access  Private (should be admin only in production)
  */
-router.post('/clear-cache', protect, async (req, res) => {
+router.post('/clear-cache', protect, adminOnly, async (req, res) => {
   try {
     externalAPIService.clearCache();
     res.status(200).json({
