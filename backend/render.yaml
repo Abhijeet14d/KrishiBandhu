@@ -17,7 +17,13 @@ services:
         sync: false
       - key: FRONTEND_URL
         sync: false
+      - key: EMAIL_HOST
+        value: smtp.gmail.com
+      - key: EMAIL_PORT
+        value: "587"
       - key: EMAIL_USER
         sync: false
-      - key: EMAIL_PASS
+      - key: EMAIL_PASSWORD
         sync: false
+      - key: OTP_EXPIRE_MINUTES
+        value: "10"
