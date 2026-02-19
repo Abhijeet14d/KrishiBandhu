@@ -20,10 +20,13 @@ if (missingVars.length > 0) {
 const app = express();
 const httpServer = createServer(app);
 
+// Strip trailing slash from FRONTEND_URL to avoid CORS mismatch
+const FRONTEND_URL = (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/+$/, '');
+
 // Initialize Socket.io
 const io = new Server(httpServer, {
   cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    origin: FRONTEND_URL,
     methods: ['GET', 'POST'],
     credentials: true
   }
@@ -37,7 +40,7 @@ app.use(helmet());
 app.use(compression());
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: FRONTEND_URL,
   credentials: true
 }));
 app.use(express.json({ limit: '10mb' })); // Increased for image uploads
