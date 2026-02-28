@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, ArrowLeft, Loader2 } from 'lucide-react';
+import { Mail, Lock, ArrowLeft, Loader2, Phone } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useAuthStore from '../store/authStore';
 
@@ -45,92 +45,122 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center px-4 transition-colors">
-      <div className="max-w-md w-full">
-        {/* Back Button */}
-        <Link
-          to="/"
-          className="inline-flex items-center text-green-600 hover:text-green-700 mb-8"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Home
-        </Link>
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 flex transition-colors">
+      {/* Left side - Form */}
+      <div className="flex-1 flex items-center justify-center px-4 py-12">
+        <div className="w-full max-w-md animate-fade-in-up">
+          {/* Back Button */}
+          <Link
+            to="/"
+            className="inline-flex items-center gap-2 text-sm text-neutral-500 hover:text-neutral-900 dark:hover:text-white mb-8 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Home
+          </Link>
 
-        {/* Login Card */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 transition-colors">
-          <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-3xl">🌾</span>
+          {/* Login Card */}
+          <div className="card p-8">
+            <div className="mb-8">
+              <div className="w-12 h-12 bg-primary-600 rounded-sm flex items-center justify-center mb-6">
+                <Phone className="w-5 h-5 text-white" />
+              </div>
+              <h1 className="text-2xl font-semibold text-neutral-900 dark:text-white mb-2">
+                Welcome back
+              </h1>
+              <p className="text-sm text-neutral-500">
+                Enter your credentials to access your account
+              </p>
             </div>
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Welcome Back</h2>
-            <p className="text-gray-600 dark:text-gray-400 mt-2">Login to your account</p>
+
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {/* Email */}
+              <div>
+                <label className="label">
+                  Email Address
+                </label>
+                <div className="relative">
+                  <Mail className="input-icon" />
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    className="input input-with-icon"
+                    placeholder="your@email.com"
+                  />
+                </div>
+              </div>
+
+              {/* Password */}
+              <div>
+                <label className="label">
+                  Password
+                </label>
+                <div className="relative">
+                  <Lock className="input-icon" />
+                  <input
+                    type="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    className="input input-with-icon"
+                    placeholder="••••••••"
+                  />
+                </div>
+                <div className="text-right mt-2">
+                  <Link to="/forgot-password" className="text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 transition-colors">
+                    Forgot password?
+                  </Link>
+                </div>
+              </div>
+
+              {/* Submit Button */}
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="btn-primary w-full py-3 press-effect"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Signing in...
+                  </>
+                ) : (
+                  'Sign In'
+                )}
+              </button>
+            </form>
+
+            {/* Divider */}
+            <div className="relative my-8">
+              <div className="divider" />
+              <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-3 bg-white dark:bg-neutral-900 text-xs text-neutral-400">
+                or
+              </span>
+            </div>
+
+            {/* Register Link */}
+            <p className="text-center text-sm text-neutral-500">
+              Don&apos;t have an account?{' '}
+              <Link to="/register" className="text-primary-600 dark:text-primary-400 font-medium hover:underline">
+                Create account
+              </Link>
+            </p>
           </div>
+        </div>
+      </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Email */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Email Address
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition"
-                  placeholder="your@email.com"
-                />
-              </div>
-            </div>
-
-            {/* Password */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Password
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition"
-                  placeholder="••••••••"
-                />
-              </div>
-              <div className="text-right mt-2">
-                <Link to="/forgot-password" className="text-sm text-green-600 hover:text-green-700">
-                  Forgot password?
-                </Link>
-              </div>
-            </div>
-
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                  Logging in...
-                </>
-              ) : (
-                'Login'
-              )}
-            </button>
-          </form>
-
-          {/* Register Link */}
-          <p className="text-center mt-6 text-gray-600 dark:text-gray-400">
-            Don't have an account?{' '}
-            <Link to="/register" className="text-green-600 hover:text-green-700 font-semibold">
-              Register here
-            </Link>
+      {/* Right side - Decorative */}
+      <div className="hidden lg:flex flex-1 bg-gradient-to-br from-primary-600 to-primary-700 items-center justify-center p-12">
+        <div className="max-w-md text-center">
+          <div className="w-20 h-20 bg-white rounded-sm flex items-center justify-center mx-auto mb-8">
+            <Phone className="w-10 h-10 text-primary-600" />
+          </div>
+          <h2 className="text-3xl font-semibold text-white mb-4">
+            Farmer Assistant
+          </h2>
+          <p className="text-primary-100 leading-relaxed">
+            Your AI-powered agricultural companion. Get instant answers to farming queries through voice or text.
           </p>
         </div>
       </div>

@@ -23,17 +23,23 @@ const App = () => {
           duration: 3000,
           style: {
             background: '#fff',
-            color: '#333',
+            color: '#171717',
+            borderRadius: '4px',
+            border: '1px solid #e5e5e5',
+            padding: '12px 16px',
+            fontSize: '14px',
+            fontWeight: '500',
+            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.06)',
           },
           success: {
             iconTheme: {
-              primary: '#10b981',
+              primary: '#171717',
               secondary: '#fff',
             },
           },
           error: {
             iconTheme: {
-              primary: '#ef4444',
+              primary: '#171717',
               secondary: '#fff',
             },
           },

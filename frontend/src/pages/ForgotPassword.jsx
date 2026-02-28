@@ -31,29 +31,26 @@ const ForgotPassword = () => {
 
   if (isSubmitted) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4 transition-colors">
-        <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 text-center transition-colors">
-          <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-            <CheckCircle className="w-8 h-8 text-green-600" />
+      <div className="min-h-screen bg-neutral-50 flex items-center justify-center p-4">
+        <div className="max-w-md w-full card p-8 text-center animate-fadeIn">
+          <div className="w-14 h-14 bg-primary-500/10 rounded-sm flex items-center justify-center mx-auto mb-4">
+            <CheckCircle className="w-7 h-7 text-primary-500" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Check Your Email</h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">
-            We've sent a password reset link to <strong>{email}</strong>. 
+          <h2 className="text-xl font-semibold text-neutral-900 mb-2">Check Your Email</h2>
+          <p className="text-sm text-neutral-600 mb-6">
+            We've sent a password reset link to <span className="font-medium text-neutral-900">{email}</span>. 
             Please check your inbox and follow the instructions.
           </p>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+          <p className="text-sm text-neutral-500 mb-6">
             Didn't receive the email? Check your spam folder or{' '}
             <button
               onClick={() => setIsSubmitted(false)}
-              className="text-green-600 hover:underline"
+              className="text-neutral-900 font-medium hover:underline"
             >
               try again
             </button>
           </p>
-          <Link
-            to="/login"
-            className="inline-flex items-center text-green-600 hover:text-green-700"
-          >
+          <Link to="/login" className="btn-ghost inline-flex">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Login
           </Link>
@@ -63,57 +60,54 @@ const ForgotPassword = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4 transition-colors">
-      <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 transition-colors">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Forgot Password?</h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            No worries! Enter your email and we'll send you a reset link.
-          </p>
-        </div>
+    <div className="min-h-screen bg-neutral-50 flex items-center justify-center p-4">
+      <div className="max-w-md w-full">
+        <Link to="/login" className="btn-ghost inline-flex mb-6">
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Login
+        </Link>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Email Address
-            </label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="email"
-                id="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email"
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
-              />
-            </div>
+        <div className="card p-8 animate-fadeIn">
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-semibold text-neutral-900 mb-2">Forgot Password?</h1>
+            <p className="text-sm text-neutral-500">
+              No worries! Enter your email and we'll send you a reset link.
+            </p>
           </div>
 
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors disabled:opacity-50 flex items-center justify-center"
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                Sending...
-              </>
-            ) : (
-              'Send Reset Link'
-            )}
-          </button>
-        </form>
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-neutral-700 mb-1.5">
+                Email Address
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
+                <input
+                  type="email"
+                  id="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter your email"
+                  className="input pl-10"
+                />
+              </div>
+            </div>
 
-        <div className="mt-6 text-center">
-          <Link
-            to="/login"
-            className="inline-flex items-center text-green-600 hover:text-green-700"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Login
-          </Link>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="btn-primary w-full justify-center"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                'Send Reset Link'
+              )}
+            </button>
+          </form>
         </div>
       </div>
     </div>

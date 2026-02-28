@@ -9,9 +9,7 @@ import {
   User,
   ImagePlus,
   X,
-  Download,
-  Moon,
-  Sun
+  Download
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import conversationService from '../services/conversation.service';
@@ -97,7 +95,7 @@ const ChatBot = () => {
     // Add user message to UI
     const userMessage = {
       role: 'user',
-      content: text || '📷 Image sent for analysis',
+      content: text || 'Image sent for analysis',
       timestamp: new Date(),
       imagePreview: imagePreview
     };
@@ -201,10 +199,10 @@ const ChatBot = () => {
 
   if (isInitializing) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-green-600 mx-auto mb-4" />
-          <p className="text-gray-600 dark:text-gray-300">
+      <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 flex items-center justify-center">
+        <div className="text-center animate-fade-in">
+          <Loader2 className="w-8 h-8 animate-spin text-neutral-400 mx-auto mb-4" />
+          <p className="text-sm text-neutral-500">
             {resumeData ? 'Resuming conversation...' : 'Starting new chat...'}
           </p>
         </div>
@@ -213,75 +211,82 @@ const ChatBot = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 flex flex-col">
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 flex flex-col">
       {/* Header */}
-      <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 p-4">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
+      <header className="topbar sticky top-0 z-40">
+        <div className="max-w-4xl mx-auto w-full flex items-center justify-between">
           <button
             onClick={handleEndChat}
-            className="flex items-center text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+            className="btn-ghost gap-2"
           >
-            <ArrowLeft className="w-5 h-5 mr-2" />
-            Back
+            <ArrowLeft className="w-4 h-4" />
+            <span className="hidden sm:inline">Back</span>
           </button>
-          <div className="text-center flex-1 mx-4">
-            <h1 className="text-gray-900 dark:text-white font-semibold flex items-center justify-center">
-              <MessageSquare className="w-5 h-5 mr-2 text-green-600" />
+          
+          <div className="flex items-center gap-2">
+            <MessageSquare className="w-4 h-4 text-neutral-400" />
+            <span className="font-medium text-neutral-900 dark:text-white text-sm">
               {conversationTitle}
-            </h1>
+            </span>
             {resumeData && (
-              <span className="text-xs text-blue-500 bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 rounded-full">
-                Continued
-              </span>
+              <span className="chip text-xs">Continued</span>
             )}
           </div>
+
           <button
             onClick={handleExport}
-            className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+            className="btn-icon"
             title="Export conversation"
           >
-            <Download className="w-5 h-5" />
+            <Download className="w-4 h-4" />
           </button>
         </div>
       </header>
 
       {/* Messages Area */}
       <main className="flex-1 overflow-hidden">
-        <div className="max-w-4xl mx-auto h-full flex flex-col p-4">
-          <div className="flex-1 overflow-y-auto space-y-4 pb-4" style={{ maxHeight: 'calc(100vh - 200px)' }}>
+        <div className="max-w-4xl mx-auto h-full flex flex-col px-4 py-6">
+          <div className="flex-1 overflow-y-auto space-y-4 scrollbar-hide" style={{ maxHeight: 'calc(100vh - 200px)' }}>
             {messages.map((msg, index) => (
               <div
                 key={index}
-                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-fadeIn`}
+                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in-up`}
+                style={{ animationDelay: `${index * 50}ms` }}
               >
-                <div className={`flex items-start gap-2 max-w-[85%] ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
+                <div className={`flex items-start gap-3 max-w-[85%] ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
                   {/* Avatar */}
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                  <div className={`w-8 h-8 rounded-sm flex items-center justify-center flex-shrink-0 ${
                     msg.role === 'user' 
-                      ? 'bg-green-600 text-white' 
-                      : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200'
+                      ? 'bg-primary-600' 
+                      : 'bg-secondary-100 dark:bg-secondary-900/30'
                   }`}>
-                    {msg.role === 'user' ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
+                    {msg.role === 'user' ? (
+                      <User className="w-4 h-4 text-white" />
+                    ) : (
+                      <Bot className="w-4 h-4 text-secondary-600 dark:text-secondary-400" />
+                    )}
                   </div>
                   
                   {/* Message Bubble */}
                   <div
-                    className={`rounded-2xl px-4 py-3 ${
+                    className={`rounded-sm px-4 py-3 ${
                       msg.role === 'user'
-                        ? 'bg-green-600 text-white'
-                        : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm border border-gray-100 dark:border-gray-600'
+                        ? 'bg-primary-600 text-white'
+                        : 'bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 border border-neutral-200 dark:border-neutral-800'
                     }`}
                   >
                     {msg.imagePreview && (
                       <img 
                         src={msg.imagePreview} 
                         alt="Uploaded" 
-                        className="max-w-[200px] rounded-lg mb-2"
+                        className="max-w-[200px] rounded-sm mb-2"
                       />
                     )}
                     <p className="text-sm whitespace-pre-wrap leading-relaxed">{msg.content}</p>
-                    <p className={`text-xs mt-1 ${
-                      msg.role === 'user' ? 'text-green-200' : 'text-gray-400 dark:text-gray-500'
+                    <p className={`text-xs mt-2 ${
+                      msg.role === 'user' 
+                        ? 'text-neutral-400 dark:text-neutral-500' 
+                        : 'text-neutral-400'
                     }`}>
                       {formatTime(msg.timestamp)}
                     </p>
@@ -292,16 +297,16 @@ const ChatBot = () => {
 
             {/* Typing Indicator */}
             {isLoading && (
-              <div className="flex justify-start animate-fadeIn">
-                <div className="flex items-start gap-2">
-                  <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
-                    <Bot className="w-4 h-4 text-gray-700 dark:text-gray-200" />
+              <div className="flex justify-start animate-fade-in">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-sm bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
+                    <Bot className="w-4 h-4 text-neutral-600 dark:text-neutral-300" />
                   </div>
-                  <div className="bg-white dark:bg-gray-700 rounded-2xl px-4 py-3 shadow-sm border border-gray-100 dark:border-gray-600">
-                    <div className="flex space-x-2">
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                  <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-sm px-4 py-3">
+                    <div className="flex space-x-1.5">
+                      <div className="w-2 h-2 bg-neutral-300 dark:bg-neutral-600 rounded-full animate-pulse" style={{ animationDelay: '0ms' }}></div>
+                      <div className="w-2 h-2 bg-neutral-300 dark:bg-neutral-600 rounded-full animate-pulse" style={{ animationDelay: '150ms' }}></div>
+                      <div className="w-2 h-2 bg-neutral-300 dark:bg-neutral-600 rounded-full animate-pulse" style={{ animationDelay: '300ms' }}></div>
                     </div>
                   </div>
                 </div>
@@ -316,12 +321,12 @@ const ChatBot = () => {
       {/* Image Preview */}
       {imagePreview && (
         <div className="max-w-4xl mx-auto px-4">
-          <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-2 flex items-center gap-2 mb-2">
-            <img src={imagePreview} alt="Preview" className="w-16 h-16 rounded object-cover" />
-            <span className="text-sm text-gray-600 dark:text-gray-300 flex-1">Image attached</span>
+          <div className="bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-sm p-3 flex items-center gap-3 mb-2">
+            <img src={imagePreview} alt="Preview" className="w-12 h-12 rounded-sm object-cover" />
+            <span className="text-sm text-neutral-600 dark:text-neutral-400 flex-1">Image attached</span>
             <button 
               onClick={() => { setSelectedImage(null); setImagePreview(null); }}
-              className="p-1 text-gray-500 hover:text-red-500"
+              className="btn-icon p-1.5"
             >
               <X className="w-4 h-4" />
             </button>
@@ -330,7 +335,7 @@ const ChatBot = () => {
       )}
 
       {/* Input Area */}
-      <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4">
+      <div className="border-t border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 p-4">
         <div className="max-w-4xl mx-auto">
           <form onSubmit={handleSendMessage} className="flex items-end gap-2">
             {/* Image Upload Button */}
@@ -344,10 +349,10 @@ const ChatBot = () => {
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="p-3 text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors"
+              className="btn-icon"
               title="Upload image for crop diagnosis"
             >
-              <ImagePlus className="w-5 h-5" />
+              <ImagePlus className="w-4 h-4" />
             </button>
 
             {/* Text Input */}
@@ -359,7 +364,7 @@ const ChatBot = () => {
                 onKeyDown={handleKeyDown}
                 placeholder="Type your farming question..."
                 rows={1}
-                className="w-full resize-none rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white px-4 py-3 pr-12 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition"
+                className="input resize-none py-3"
                 style={{ maxHeight: '120px', minHeight: '48px' }}
                 disabled={isLoading}
               />
@@ -369,16 +374,16 @@ const ChatBot = () => {
             <button
               type="submit"
               disabled={isLoading || (!inputMessage.trim() && !selectedImage)}
-              className="p-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 dark:disabled:bg-gray-600 text-white rounded-xl transition-colors"
+              className="btn-primary px-4 py-3 disabled:opacity-40"
             >
               {isLoading ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
+                <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
-                <Send className="w-5 h-5" />
+                <Send className="w-4 h-4" />
               )}
             </button>
           </form>
-          <p className="text-xs text-gray-400 dark:text-gray-500 mt-2 text-center">
+          <p className="text-xs text-neutral-400 mt-2 text-center">
             Press Enter to send, Shift+Enter for new line
           </p>
         </div>

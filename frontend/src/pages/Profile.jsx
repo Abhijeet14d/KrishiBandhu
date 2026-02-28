@@ -13,7 +13,9 @@ import {
   MapPin,
   Tractor,
   Droplets,
-  Leaf
+  Leaf,
+  Shield,
+  ChevronRight
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useAuthStore from '../store/authStore';
@@ -148,7 +150,6 @@ const Profile = () => {
     try {
       setIsLoading(true);
       const response = await dataService.updateUserLocation(locationData);
-      // Update user in store with new location
       setUser({ ...user, location: response.location });
       setIsEditingLocation(false);
       toast.success('Location updated successfully');
@@ -169,7 +170,6 @@ const Profile = () => {
         soilType: farmingData.soilType
       };
       const response = await dataService.updateFarmingProfile(profileData);
-      // Update user in store with new farming profile
       setUser({ ...user, farmingProfile: response.farmingProfile });
       setIsEditingFarming(false);
       toast.success('Farming profile updated successfully');
@@ -242,208 +242,219 @@ const Profile = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 transition-colors">
+    <div className="min-h-screen bg-neutral-50">
       {/* Header */}
-      <header className="bg-white dark:bg-gray-800 shadow-sm transition-colors">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center">
+      <header className="topbar">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           <button
             onClick={() => navigate('/dashboard')}
-            className="flex items-center text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+            className="btn-ghost"
           >
-            <ArrowLeft className="w-5 h-5 mr-2" />
-            Back to Dashboard
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back
           </button>
+          <h1 className="text-base font-semibold text-neutral-900">Profile</h1>
+          <div className="w-20" />
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-4 py-8">
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden transition-colors">
-          {/* Profile Header */}
-          <div className="bg-gradient-to-r from-green-500 to-green-600 px-8 py-12 text-white">
-            <div className="flex items-center space-x-6">
-              <div className="w-24 h-24 bg-white/20 rounded-full flex items-center justify-center">
-                <User className="w-12 h-12" />
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
+        {/* Profile Header Card */}
+        <div className="card animate-fadeIn mb-6">
+          <div className="p-6 sm:p-8 border-b border-neutral-200">
+            <div className="flex items-center gap-5">
+              <div className="w-20 h-20 bg-neutral-100 rounded-sm flex items-center justify-center flex-shrink-0">
+                <User className="w-10 h-10 text-neutral-400" />
               </div>
-              <div>
-                <h1 className="text-3xl font-bold">{user?.name}</h1>
-                <p className="text-green-100 mt-1">{user?.email}</p>
+              <div className="min-w-0">
+                <h2 className="text-xl font-semibold text-neutral-900 truncate">
+                  {user?.name}
+                </h2>
+                <p className="text-sm text-neutral-500 truncate mt-1">
+                  {user?.email}
+                </p>
               </div>
-            </div>
-          </div>
-
-          {/* Profile Form */}
-          <div className="p-8">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Profile Information</h2>
-              {!isEditing ? (
-                <button
-                  onClick={() => setIsEditing(true)}
-                  className="flex items-center px-4 py-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                >
-                  <Edit2 className="w-4 h-4 mr-2" />
-                  Edit Profile
-                </button>
-              ) : (
-                <div className="flex space-x-2">
-                  <button
-                    onClick={cancelEdit}
-                    className="flex items-center px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                  >
-                    <X className="w-4 h-4 mr-2" />
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleSaveProfile}
-                    disabled={isLoading}
-                    className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
-                  >
-                    {isLoading ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    ) : (
-                      <Save className="w-4 h-4 mr-2" />
-                    )}
-                    Save Changes
-                  </button>
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-6">
-              {/* Name */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Full Name
-                </label>
-                {isEditing ? (
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    <input
-                      type="text"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleInputChange}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    />
-                  </div>
-                ) : (
-                  <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                    <User className="w-5 h-5 text-gray-400" />
-                    <span className="text-gray-900">{user?.name}</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Email (Read-only) */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email Address
-                </label>
-                <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                  <Mail className="w-5 h-5 text-gray-400" />
-                  <span className="text-gray-900">{user?.email}</span>
-                  <span className="text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded">Verified</span>
-                </div>
-              </div>
-
-              {/* Phone */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Phone Number
-                </label>
-                {isEditing ? (
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    <input
-                      type="tel"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleInputChange}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    />
-                  </div>
-                ) : (
-                  <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                    <Phone className="w-5 h-5 text-gray-400" />
-                    <span className="text-gray-900">{user?.phone}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Change Password Section */}
-            <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-700">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Security</h3>
-              <button
-                onClick={() => setShowPasswordModal(true)}
-                className="flex items-center px-4 py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
-              >
-                <Lock className="w-5 h-5 text-gray-600 dark:text-gray-400 mr-3" />
-                <span className="text-gray-700 dark:text-gray-300">Change Password</span>
-              </button>
             </div>
           </div>
         </div>
 
-        {/* Location Section */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden mt-6 transition-colors">
-          <div className="p-8">
-            <div className="flex justify-between items-center mb-6">
-              <div className="flex items-center">
-                <MapPin className="w-6 h-6 text-green-600 mr-2" />
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Location</h2>
-              </div>
-              {!isEditingLocation ? (
-                <button
-                  onClick={() => setIsEditingLocation(true)}
-                  className="flex items-center px-4 py-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                >
-                  <Edit2 className="w-4 h-4 mr-2" />
-                  Edit Location
+        {/* Profile Information Card */}
+        <div className="card animate-fadeIn mb-6" style={{ animationDelay: '50ms' }}>
+          <div className="card-header">
+            <div className="flex items-center gap-2">
+              <User className="w-4 h-4 text-neutral-400" />
+              <h3 className="text-base font-semibold text-neutral-900">Personal Information</h3>
+            </div>
+            {!isEditing ? (
+              <button onClick={() => setIsEditing(true)} className="btn-ghost">
+                <Edit2 className="w-4 h-4 mr-1.5" />
+                Edit
+              </button>
+            ) : (
+              <div className="flex items-center gap-2">
+                <button onClick={cancelEdit} className="btn-ghost">
+                  <X className="w-4 h-4 mr-1" />
+                  Cancel
                 </button>
+                <button 
+                  onClick={handleSaveProfile} 
+                  disabled={isLoading}
+                  className="btn-primary"
+                >
+                  {isLoading ? (
+                    <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+                  ) : (
+                    <Save className="w-4 h-4 mr-1.5" />
+                  )}
+                  Save
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="card-body space-y-5">
+            {/* Name Field */}
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-2">
+                Full Name
+              </label>
+              {isEditing ? (
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    className="input pl-10"
+                    placeholder="Enter your full name"
+                  />
+                </div>
               ) : (
-                <div className="flex space-x-2">
-                  <button
-                    onClick={cancelLocationEdit}
-                    className="flex items-center px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                  >
-                    <X className="w-4 h-4 mr-2" />
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleSaveLocation}
-                    disabled={isLoading}
-                    className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
-                  >
-                    {isLoading ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    ) : (
-                      <Save className="w-4 h-4 mr-2" />
-                    )}
-                    Save
-                  </button>
+                <div className="flex items-center gap-3 px-3 py-2.5 bg-neutral-50 rounded-sm border border-neutral-200">
+                  <User className="w-4 h-4 text-neutral-400" />
+                  <span className="text-neutral-900">{user?.name}</span>
                 </div>
               )}
             </div>
 
+            {/* Email Field (Read-only) */}
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-2">
+                Email Address
+              </label>
+              <div className="flex items-center gap-3 px-3 py-2.5 bg-neutral-50 rounded-sm border border-neutral-200">
+                <Mail className="w-4 h-4 text-neutral-400" />
+                <span className="text-neutral-900 flex-1">{user?.email}</span>
+                <span className="chip text-xs">Verified</span>
+              </div>
+            </div>
+
+            {/* Phone Field */}
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-2">
+                Phone Number
+              </label>
+              {isEditing ? (
+                <div className="relative">
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
+                  <input
+                    type="tel"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleInputChange}
+                    className="input pl-10"
+                    placeholder="Enter 10-digit phone number"
+                  />
+                </div>
+              ) : (
+                <div className="flex items-center gap-3 px-3 py-2.5 bg-neutral-50 rounded-sm border border-neutral-200">
+                  <Phone className="w-4 h-4 text-neutral-400" />
+                  <span className="text-neutral-900">{user?.phone || 'Not set'}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Security Card */}
+        <div className="card animate-fadeIn mb-6" style={{ animationDelay: '100ms' }}>
+          <div className="card-header">
+            <div className="flex items-center gap-2">
+              <Shield className="w-4 h-4 text-neutral-400" />
+              <h3 className="text-base font-semibold text-neutral-900">Security</h3>
+            </div>
+          </div>
+          <div className="card-body">
+            <button
+              onClick={() => setShowPasswordModal(true)}
+              className="w-full flex items-center justify-between px-3 py-3 bg-neutral-50 hover:bg-neutral-100 rounded-sm border border-neutral-200 transition-colors group"
+            >
+              <div className="flex items-center gap-3">
+                <Lock className="w-4 h-4 text-neutral-400" />
+                <span className="text-sm text-neutral-700">Change Password</span>
+              </div>
+              <ChevronRight className="w-4 h-4 text-neutral-400 group-hover:translate-x-0.5 transition-transform" />
+            </button>
+          </div>
+        </div>
+
+        {/* Location Card */}
+        <div className="card animate-fadeIn mb-6" style={{ animationDelay: '150ms' }}>
+          <div className="card-header">
+            <div className="flex items-center gap-2">
+              <MapPin className="w-4 h-4 text-neutral-400" />
+              <h3 className="text-base font-semibold text-neutral-900">Location</h3>
+            </div>
+            {!isEditingLocation ? (
+              <button onClick={() => setIsEditingLocation(true)} className="btn-ghost">
+                <Edit2 className="w-4 h-4 mr-1.5" />
+                Edit
+              </button>
+            ) : (
+              <div className="flex items-center gap-2">
+                <button onClick={cancelLocationEdit} className="btn-ghost">
+                  <X className="w-4 h-4 mr-1" />
+                  Cancel
+                </button>
+                <button 
+                  onClick={handleSaveLocation} 
+                  disabled={isLoading}
+                  className="btn-primary"
+                >
+                  {isLoading ? (
+                    <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+                  ) : (
+                    <Save className="w-4 h-4 mr-1.5" />
+                  )}
+                  Save
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="card-body">
             {!user?.location?.state && !isEditingLocation && (
-              <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-4">
-                <p className="text-yellow-800 dark:text-yellow-400 text-sm">
-                  ⚠️ Set your location to get personalized market prices, weather updates, and government schemes for your area.
+              <div className="bg-amber-50 border border-amber-200 rounded-sm p-3 mb-5">
+                <p className="text-amber-800 text-sm">
+                  Set your location to get personalized market prices, weather updates, and government schemes for your area.
                 </p>
               </div>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* State */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">State *</label>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">
+                  State <span className="text-red-500">*</span>
+                </label>
                 {isEditingLocation ? (
                   <select
                     name="state"
                     value={locationData.state}
                     onChange={handleLocationChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    className="select"
                   >
                     <option value="">Select State</option>
                     {INDIAN_STATES.map(state => (
@@ -451,7 +462,7 @@ const Profile = () => {
                     ))}
                   </select>
                 ) : (
-                  <div className="p-3 bg-gray-50 rounded-lg text-gray-900">
+                  <div className="px-3 py-2.5 bg-neutral-50 rounded-sm border border-neutral-200 text-neutral-900 text-sm">
                     {user?.location?.state || 'Not set'}
                   </div>
                 )}
@@ -459,7 +470,9 @@ const Profile = () => {
 
               {/* District */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">District</label>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">
+                  District
+                </label>
                 {isEditingLocation ? (
                   <input
                     type="text"
@@ -467,10 +480,10 @@ const Profile = () => {
                     value={locationData.district}
                     onChange={handleLocationChange}
                     placeholder="Enter district"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    className="input"
                   />
                 ) : (
-                  <div className="p-3 bg-gray-50 rounded-lg text-gray-900">
+                  <div className="px-3 py-2.5 bg-neutral-50 rounded-sm border border-neutral-200 text-neutral-900 text-sm">
                     {user?.location?.district || 'Not set'}
                   </div>
                 )}
@@ -478,7 +491,9 @@ const Profile = () => {
 
               {/* City/Town */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">City/Town</label>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">
+                  City / Town
+                </label>
                 {isEditingLocation ? (
                   <input
                     type="text"
@@ -486,10 +501,10 @@ const Profile = () => {
                     value={locationData.city}
                     onChange={handleLocationChange}
                     placeholder="Enter city or town"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    className="input"
                   />
                 ) : (
-                  <div className="p-3 bg-gray-50 rounded-lg text-gray-900">
+                  <div className="px-3 py-2.5 bg-neutral-50 rounded-sm border border-neutral-200 text-neutral-900 text-sm">
                     {user?.location?.city || 'Not set'}
                   </div>
                 )}
@@ -497,7 +512,9 @@ const Profile = () => {
 
               {/* Village */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Village</label>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">
+                  Village
+                </label>
                 {isEditingLocation ? (
                   <input
                     type="text"
@@ -505,10 +522,10 @@ const Profile = () => {
                     value={locationData.village}
                     onChange={handleLocationChange}
                     placeholder="Enter village name"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    className="input"
                   />
                 ) : (
-                  <div className="p-3 bg-gray-50 rounded-lg text-gray-900">
+                  <div className="px-3 py-2.5 bg-neutral-50 rounded-sm border border-neutral-200 text-neutral-900 text-sm">
                     {user?.location?.village || 'Not set'}
                   </div>
                 )}
@@ -516,7 +533,9 @@ const Profile = () => {
 
               {/* Pincode */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Pincode</label>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">
+                  Pincode
+                </label>
                 {isEditingLocation ? (
                   <input
                     type="text"
@@ -525,10 +544,10 @@ const Profile = () => {
                     onChange={handleLocationChange}
                     placeholder="Enter 6-digit pincode"
                     maxLength={6}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    className="input"
                   />
                 ) : (
-                  <div className="p-3 bg-gray-50 rounded-lg text-gray-900">
+                  <div className="px-3 py-2.5 bg-neutral-50 rounded-sm border border-neutral-200 text-neutral-900 text-sm">
                     {user?.location?.pincode || 'Not set'}
                   </div>
                 )}
@@ -537,53 +556,47 @@ const Profile = () => {
           </div>
         </div>
 
-        {/* Farming Profile Section */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden mt-6 transition-colors">
-          <div className="p-8">
-            <div className="flex justify-between items-center mb-6">
-              <div className="flex items-center">
-                <Tractor className="w-6 h-6 text-green-600 mr-2" />
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Farming Profile</h2>
-              </div>
-              {!isEditingFarming ? (
-                <button
-                  onClick={() => setIsEditingFarming(true)}
-                  className="flex items-center px-4 py-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                >
-                  <Edit2 className="w-4 h-4 mr-2" />
-                  Edit
-                </button>
-              ) : (
-                <div className="flex space-x-2">
-                  <button
-                    onClick={cancelFarmingEdit}
-                    className="flex items-center px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                  >
-                    <X className="w-4 h-4 mr-2" />
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleSaveFarming}
-                    disabled={isLoading}
-                    className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
-                  >
-                    {isLoading ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    ) : (
-                      <Save className="w-4 h-4 mr-2" />
-                    )}
-                    Save
-                  </button>
-                </div>
-              )}
+        {/* Farming Profile Card */}
+        <div className="card animate-fadeIn" style={{ animationDelay: '200ms' }}>
+          <div className="card-header">
+            <div className="flex items-center gap-2">
+              <Tractor className="w-4 h-4 text-neutral-400" />
+              <h3 className="text-base font-semibold text-neutral-900">Farming Profile</h3>
             </div>
+            {!isEditingFarming ? (
+              <button onClick={() => setIsEditingFarming(true)} className="btn-ghost">
+                <Edit2 className="w-4 h-4 mr-1.5" />
+                Edit
+              </button>
+            ) : (
+              <div className="flex items-center gap-2">
+                <button onClick={cancelFarmingEdit} className="btn-ghost">
+                  <X className="w-4 h-4 mr-1" />
+                  Cancel
+                </button>
+                <button 
+                  onClick={handleSaveFarming} 
+                  disabled={isLoading}
+                  className="btn-primary"
+                >
+                  {isLoading ? (
+                    <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+                  ) : (
+                    <Save className="w-4 h-4 mr-1.5" />
+                  )}
+                  Save
+                </button>
+              </div>
+            )}
+          </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="card-body">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Land Size */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <Leaf className="w-4 h-4 inline mr-1" />
-                  Land Size (in acres)
+                <label className="block text-sm font-medium text-neutral-700 mb-2">
+                  <Leaf className="w-3.5 h-3.5 inline mr-1.5" />
+                  Land Size (acres)
                 </label>
                 {isEditingFarming ? (
                   <input
@@ -594,10 +607,10 @@ const Profile = () => {
                     placeholder="Enter land size"
                     step="0.5"
                     min="0"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    className="input"
                   />
                 ) : (
-                  <div className="p-3 bg-gray-50 rounded-lg text-gray-900">
+                  <div className="px-3 py-2.5 bg-neutral-50 rounded-sm border border-neutral-200 text-neutral-900 text-sm">
                     {user?.farmingProfile?.landSize ? `${user.farmingProfile.landSize} acres` : 'Not set'}
                   </div>
                 )}
@@ -605,8 +618,8 @@ const Profile = () => {
 
               {/* Irrigation Type */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <Droplets className="w-4 h-4 inline mr-1" />
+                <label className="block text-sm font-medium text-neutral-700 mb-2">
+                  <Droplets className="w-3.5 h-3.5 inline mr-1.5" />
                   Irrigation Type
                 </label>
                 {isEditingFarming ? (
@@ -614,14 +627,14 @@ const Profile = () => {
                     name="irrigationType"
                     value={farmingData.irrigationType}
                     onChange={handleFarmingChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    className="select"
                   >
                     {IRRIGATION_TYPES.map(type => (
                       <option key={type.value} value={type.value}>{type.label}</option>
                     ))}
                   </select>
                 ) : (
-                  <div className="p-3 bg-gray-50 rounded-lg text-gray-900 capitalize">
+                  <div className="px-3 py-2.5 bg-neutral-50 rounded-sm border border-neutral-200 text-neutral-900 text-sm capitalize">
                     {user?.farmingProfile?.irrigationType || 'Not set'}
                   </div>
                 )}
@@ -629,20 +642,22 @@ const Profile = () => {
 
               {/* Soil Type */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Soil Type</label>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">
+                  Soil Type
+                </label>
                 {isEditingFarming ? (
                   <select
                     name="soilType"
                     value={farmingData.soilType}
                     onChange={handleFarmingChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    className="select"
                   >
                     {SOIL_TYPES.map(type => (
                       <option key={type.value} value={type.value}>{type.label}</option>
                     ))}
                   </select>
                 ) : (
-                  <div className="p-3 bg-gray-50 rounded-lg text-gray-900 capitalize">
+                  <div className="px-3 py-2.5 bg-neutral-50 rounded-sm border border-neutral-200 text-neutral-900 text-sm capitalize">
                     {user?.farmingProfile?.soilType || 'Not set'}
                   </div>
                 )}
@@ -650,18 +665,20 @@ const Profile = () => {
 
               {/* Primary Crops */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Primary Crops</label>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">
+                  Primary Crops
+                </label>
                 {isEditingFarming ? (
                   <input
                     type="text"
                     name="primaryCrops"
                     value={farmingData.primaryCrops}
                     onChange={handleFarmingChange}
-                    placeholder="e.g., Wheat, Rice, Cotton (comma separated)"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    placeholder="e.g., Wheat, Rice, Cotton"
+                    className="input"
                   />
                 ) : (
-                  <div className="p-3 bg-gray-50 rounded-lg text-gray-900">
+                  <div className="px-3 py-2.5 bg-neutral-50 rounded-sm border border-neutral-200 text-neutral-900 text-sm">
                     {user?.farmingProfile?.primaryCrops?.length > 0 
                       ? user.farmingProfile.primaryCrops.join(', ')
                       : 'Not set'}
@@ -675,13 +692,27 @@ const Profile = () => {
 
       {/* Change Password Modal */}
       {showPasswordModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full p-6 transition-colors">
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Change Password</h3>
+        <div className="modal-overlay" onClick={() => setShowPasswordModal(false)}>
+          <div 
+            className="modal w-full max-w-md animate-scaleIn"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between p-4 border-b border-neutral-200">
+              <div className="flex items-center gap-2">
+                <Lock className="w-4 h-4 text-neutral-400" />
+                <h3 className="text-base font-semibold text-neutral-900">Change Password</h3>
+              </div>
+              <button
+                onClick={() => setShowPasswordModal(false)}
+                className="btn-icon"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
             
-            <div className="space-y-4">
+            <div className="p-4 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-neutral-700 mb-1.5">
                   Current Password
                 </label>
                 <input
@@ -689,12 +720,13 @@ const Profile = () => {
                   name="currentPassword"
                   value={passwordData.currentPassword}
                   onChange={handlePasswordChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  className="input"
+                  placeholder="Enter current password"
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-neutral-700 mb-1.5">
                   New Password
                 </label>
                 <input
@@ -702,12 +734,13 @@ const Profile = () => {
                   name="newPassword"
                   value={passwordData.newPassword}
                   onChange={handlePasswordChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  className="input"
+                  placeholder="Enter new password"
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-neutral-700 mb-1.5">
                   Confirm New Password
                 </label>
                 <input
@@ -715,27 +748,35 @@ const Profile = () => {
                   name="confirmPassword"
                   value={passwordData.confirmPassword}
                   onChange={handlePasswordChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  className="input"
+                  placeholder="Confirm new password"
                 />
               </div>
             </div>
 
-            <div className="flex space-x-3 mt-6">
+            <div className="flex items-center gap-3 p-4 border-t border-neutral-100">
               <button
                 onClick={() => {
                   setShowPasswordModal(false);
                   setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
                 }}
-                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                className="btn-secondary flex-1"
               >
                 Cancel
               </button>
               <button
                 onClick={handleChangePassword}
                 disabled={isLoading}
-                className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+                className="btn-primary flex-1"
               >
-                {isLoading ? 'Changing...' : 'Change Password'}
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+                    Changing...
+                  </>
+                ) : (
+                  'Change Password'
+                )}
               </button>
             </div>
           </div>

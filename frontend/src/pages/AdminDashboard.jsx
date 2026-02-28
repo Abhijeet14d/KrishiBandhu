@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Users, MessageSquare, FileText, Plus, Pencil, Trash2,
-  Loader2, Search, ChevronDown, X, ExternalLink, Shield, BarChart3,
+  Loader2, Search, X, ExternalLink, Shield, BarChart3,
   Globe, MapPin, ToggleLeft, ToggleRight
 } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -36,13 +36,6 @@ const AdminDashboard = () => {
   const { user } = useAuthStore();
   const navigate = useNavigate();
 
-  // Dark mode
-  const [darkMode] = useState(() => localStorage.getItem('darkMode') === 'true');
-  useEffect(() => {
-    if (darkMode) document.documentElement.classList.add('dark');
-    else document.documentElement.classList.remove('dark');
-  }, [darkMode]);
-
   // Stats
   const [stats, setStats] = useState(null);
   const [isLoadingStats, setIsLoadingStats] = useState(true);
@@ -50,13 +43,12 @@ const AdminDashboard = () => {
   // Schemes
   const [schemes, setSchemes] = useState([]);
   const [isLoadingSchemes, setIsLoadingSchemes] = useState(true);
-  const [schemeFilter, setSchemeFilter] = useState('all'); // all, central, state
+  const [schemeFilter, setSchemeFilter] = useState('all');
 
   // Users
   const [users, setUsers] = useState([]);
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
   const [userSearch, setUserSearch] = useState('');
-  const [showUsers, setShowUsers] = useState(false);
 
   // Form
   const [showForm, setShowForm] = useState(false);
@@ -68,7 +60,7 @@ const AdminDashboard = () => {
   const [deleteTarget, setDeleteTarget] = useState(null);
 
   // Active tab
-  const [activeTab, setActiveTab] = useState('schemes'); // schemes, users
+  const [activeTab, setActiveTab] = useState('schemes');
 
   useEffect(() => {
     fetchStats();
@@ -118,18 +110,17 @@ const AdminDashboard = () => {
   }, [schemeFilter]);
 
   useEffect(() => {
-    if (showUsers || activeTab === 'users') {
+    if (activeTab === 'users') {
       fetchUsers(userSearch);
     }
-  }, [showUsers, activeTab]);
+  }, [activeTab]);
 
   const handleUserSearch = (e) => {
     e.preventDefault();
     fetchUsers(userSearch);
   };
 
-  // ─── Form Handlers ───────────────────────────────────────────────────────
-
+  // Form Handlers
   const openCreateForm = () => {
     setEditingScheme(null);
     setForm(emptySchemeForm);
@@ -158,7 +149,6 @@ const AdminDashboard = () => {
     setForm(prev => ({
       ...prev,
       [name]: value,
-      // Clear state if switching to central
       ...(name === 'type' && value === 'central' ? { state: '' } : {})
     }));
   };
@@ -226,285 +216,331 @@ const AdminDashboard = () => {
     }
   };
 
-  // ─── Render ───────────────────────────────────────────────────────────────
-
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
+    <div className="min-h-screen bg-neutral-50">
       {/* Header */}
-      <div className="bg-gradient-to-r from-indigo-600 to-purple-700 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+      <header className="topbar">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <button onClick={() => navigate('/dashboard')} className="p-2 hover:bg-white/10 rounded-lg transition-colors">
-                <ArrowLeft className="w-5 h-5" />
+              <button 
+                onClick={() => navigate('/dashboard')} 
+                className="btn-ghost"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back
               </button>
-              <div>
+              <div className="hidden sm:block">
                 <div className="flex items-center gap-2">
-                  <Shield className="w-6 h-6" />
-                  <h1 className="text-2xl font-bold">Admin Dashboard</h1>
+                  <Shield className="w-5 h-5 text-neutral-400" />
+                  <h1 className="text-lg font-semibold text-neutral-900">Admin Dashboard</h1>
                 </div>
-                <p className="text-indigo-200 text-sm mt-1">Manage users, schemes & monitor platform</p>
               </div>
             </div>
-            <div className="text-right text-sm text-indigo-200">
-              <p>Signed in as <span className="font-semibold text-white">{user?.name}</span></p>
-              <p className="text-xs">{user?.email}</p>
+            <div className="text-right text-sm">
+              <p className="text-neutral-900 font-medium">{user?.name}</p>
+              <p className="text-xs text-neutral-500">{user?.email}</p>
             </div>
           </div>
         </div>
-      </div>
+      </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
         {/* Stats Cards */}
         {isLoadingStats ? (
           <div className="flex justify-center py-8">
-            <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+            <Loader2 className="w-6 h-6 animate-spin text-neutral-400" />
           </div>
         ) : stats && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            <StatCard icon={<Users className="w-6 h-6" />} label="Total Users" value={stats.totalUsers} color="blue" />
-            <StatCard icon={<MessageSquare className="w-6 h-6" />} label="Total Queries" value={stats.totalQueries} color="green" />
-            <StatCard icon={<BarChart3 className="w-6 h-6" />} label="Conversations" value={stats.totalConversations} color="purple" />
-            <StatCard icon={<FileText className="w-6 h-6" />} label="Active Schemes" value={stats.activeSchemes} color="orange" />
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6 animate-fadeIn">
+            <StatCard 
+              icon={<Users className="w-5 h-5" />} 
+              label="Total Users" 
+              value={stats.totalUsers} 
+            />
+            <StatCard 
+              icon={<MessageSquare className="w-5 h-5" />} 
+              label="Total Queries" 
+              value={stats.totalQueries} 
+            />
+            <StatCard 
+              icon={<BarChart3 className="w-5 h-5" />} 
+              label="Conversations" 
+              value={stats.totalConversations} 
+            />
+            <StatCard 
+              icon={<FileText className="w-5 h-5" />} 
+              label="Active Schemes" 
+              value={stats.activeSchemes} 
+            />
           </div>
         )}
 
         {/* Tabs */}
-        <div className="flex gap-2 mb-6">
+        <div className="flex gap-1 mb-6 bg-neutral-100 p-1 rounded-sm w-fit">
           <button
             onClick={() => setActiveTab('schemes')}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+            className={`px-4 py-2 rounded-sm text-sm font-medium transition-colors flex items-center gap-2 ${
               activeTab === 'schemes'
-                ? 'bg-indigo-600 text-white'
-                : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                ? 'bg-white text-neutral-900 shadow-sm'
+                : 'text-neutral-600 hover:text-neutral-900'
             }`}
           >
-            <FileText className="w-4 h-4 inline mr-2" />
-            Government Schemes
+            <FileText className="w-4 h-4" />
+            Schemes
           </button>
           <button
             onClick={() => setActiveTab('users')}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+            className={`px-4 py-2 rounded-sm text-sm font-medium transition-colors flex items-center gap-2 ${
               activeTab === 'users'
-                ? 'bg-indigo-600 text-white'
-                : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                ? 'bg-white text-neutral-900 shadow-sm'
+                : 'text-neutral-600 hover:text-neutral-900'
             }`}
           >
-            <Users className="w-4 h-4 inline mr-2" />
+            <Users className="w-4 h-4" />
             Users
           </button>
         </div>
 
-        {/* ─── Schemes Tab ─────────────────────────────────────────────────── */}
+        {/* Schemes Tab */}
         {activeTab === 'schemes' && (
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+          <div className="card animate-fadeIn">
+            <div className="card-header flex-col sm:flex-row gap-4">
               <div>
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Government Schemes</h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Manage central and state-specific schemes for farmers</p>
+                <h2 className="text-base font-semibold text-neutral-900">Government Schemes</h2>
+                <p className="text-sm text-neutral-500 mt-0.5">Manage central and state-specific schemes</p>
               </div>
-              <div className="flex items-center gap-3">
-                {/* Filter */}
+              <div className="flex items-center gap-3 flex-wrap">
                 <select
                   value={schemeFilter}
                   onChange={(e) => setSchemeFilter(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200"
+                  className="select text-sm"
                 >
                   <option value="all">All Types</option>
                   <option value="central">Central</option>
                   <option value="state">State</option>
                 </select>
-                <button
-                  onClick={openCreateForm}
-                  className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors"
-                >
-                  <Plus className="w-4 h-4" />
+                <button onClick={openCreateForm} className="btn-primary">
+                  <Plus className="w-4 h-4 mr-1.5" />
                   Add Scheme
                 </button>
               </div>
             </div>
 
-            {isLoadingSchemes ? (
-              <div className="flex justify-center py-12">
-                <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
-              </div>
-            ) : schemes.length === 0 ? (
-              <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-                <FileText className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                <p className="text-lg font-medium">No schemes found</p>
-                <p className="text-sm">Click "Add Scheme" to create the first one</p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-200 dark:border-gray-700">
-                      <th className="text-left py-3 px-2 text-gray-600 dark:text-gray-400 font-medium">Title</th>
-                      <th className="text-left py-3 px-2 text-gray-600 dark:text-gray-400 font-medium">Type</th>
-                      <th className="text-left py-3 px-2 text-gray-600 dark:text-gray-400 font-medium hidden md:table-cell">Category</th>
-                      <th className="text-left py-3 px-2 text-gray-600 dark:text-gray-400 font-medium hidden lg:table-cell">State</th>
-                      <th className="text-center py-3 px-2 text-gray-600 dark:text-gray-400 font-medium">Active</th>
-                      <th className="text-center py-3 px-2 text-gray-600 dark:text-gray-400 font-medium">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {schemes.map((scheme) => (
-                      <tr key={scheme._id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                        <td className="py-3 px-2">
-                          <div className="font-medium text-gray-900 dark:text-white">{scheme.title}</div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1">{scheme.description}</div>
-                        </td>
-                        <td className="py-3 px-2">
-                          <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
-                            scheme.type === 'central'
-                              ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                              : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                          }`}>
-                            {scheme.type === 'central' ? <Globe className="w-3 h-3" /> : <MapPin className="w-3 h-3" />}
-                            {scheme.type === 'central' ? 'Central' : 'State'}
-                          </span>
-                        </td>
-                        <td className="py-3 px-2 text-gray-600 dark:text-gray-300 hidden md:table-cell">{scheme.category || '—'}</td>
-                        <td className="py-3 px-2 text-gray-600 dark:text-gray-300 hidden lg:table-cell">{scheme.state || 'All India'}</td>
-                        <td className="py-3 px-2 text-center">
-                          <button onClick={() => handleToggleActive(scheme)} title={scheme.isActive ? 'Deactivate' : 'Activate'}>
-                            {scheme.isActive
-                              ? <ToggleRight className="w-6 h-6 text-green-500 mx-auto" />
-                              : <ToggleLeft className="w-6 h-6 text-gray-400 mx-auto" />
-                            }
-                          </button>
-                        </td>
-                        <td className="py-3 px-2">
-                          <div className="flex items-center justify-center gap-2">
-                            {scheme.link && (
-                              <a href={scheme.link} target="_blank" rel="noopener noreferrer" className="p-1.5 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400" title="Open portal">
-                                <ExternalLink className="w-4 h-4" />
-                              </a>
-                            )}
-                            <button onClick={() => openEditForm(scheme)} className="p-1.5 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400" title="Edit">
-                              <Pencil className="w-4 h-4" />
-                            </button>
-                            <button onClick={() => setDeleteTarget(scheme)} className="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400" title="Delete">
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </td>
+            <div className="card-body p-0">
+              {isLoadingSchemes ? (
+                <div className="flex justify-center py-12">
+                  <Loader2 className="w-6 h-6 animate-spin text-neutral-400" />
+                </div>
+              ) : schemes.length === 0 ? (
+                <div className="empty-state py-12">
+                  <FileText className="w-10 h-10 text-neutral-300 mx-auto mb-3" />
+                  <p className="text-neutral-600 font-medium">No schemes found</p>
+                  <p className="text-sm text-neutral-500 mt-1">Click "Add Scheme" to create one</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-neutral-200">
+                        <th className="text-left py-3 px-4 text-neutral-500 font-medium text-xs uppercase tracking-wider">Title</th>
+                        <th className="text-left py-3 px-4 text-neutral-500 font-medium text-xs uppercase tracking-wider">Type</th>
+                        <th className="text-left py-3 px-4 text-neutral-500 font-medium text-xs uppercase tracking-wider hidden md:table-cell">Category</th>
+                        <th className="text-left py-3 px-4 text-neutral-500 font-medium text-xs uppercase tracking-wider hidden lg:table-cell">State</th>
+                        <th className="text-center py-3 px-4 text-neutral-500 font-medium text-xs uppercase tracking-wider">Status</th>
+                        <th className="text-center py-3 px-4 text-neutral-500 font-medium text-xs uppercase tracking-wider">Actions</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+                    </thead>
+                    <tbody>
+                      {schemes.map((scheme) => (
+                        <tr key={scheme._id} className="border-b border-neutral-100 hover:bg-neutral-50 transition-colors">
+                          <td className="py-3 px-4">
+                            <div className="font-medium text-neutral-900">{scheme.title}</div>
+                            <div className="text-xs text-neutral-500 line-clamp-1 max-w-xs">{scheme.description}</div>
+                          </td>
+                          <td className="py-3 px-4">
+                            <span className={`chip ${scheme.type === 'central' ? 'chip-active' : ''}`}>
+                              {scheme.type === 'central' ? (
+                                <Globe className="w-3 h-3 mr-1" />
+                              ) : (
+                                <MapPin className="w-3 h-3 mr-1" />
+                              )}
+                              {scheme.type === 'central' ? 'Central' : 'State'}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-neutral-600 hidden md:table-cell">
+                            {scheme.category || '—'}
+                          </td>
+                          <td className="py-3 px-4 text-neutral-600 hidden lg:table-cell">
+                            {scheme.state || 'All India'}
+                          </td>
+                          <td className="py-3 px-4 text-center">
+                            <button 
+                              onClick={() => handleToggleActive(scheme)} 
+                              title={scheme.isActive ? 'Active - Click to deactivate' : 'Inactive - Click to activate'}
+                              className="inline-flex items-center justify-center"
+                            >
+                              {scheme.isActive ? (
+                                <ToggleRight className="w-6 h-6 text-primary-500" />
+                              ) : (
+                                <ToggleLeft className="w-6 h-6 text-neutral-400" />
+                              )}
+                            </button>
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="flex items-center justify-center gap-1">
+                              {scheme.link && (
+                                <a 
+                                  href={scheme.link} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer" 
+                                  className="btn-icon"
+                                  title="Open portal"
+                                >
+                                  <ExternalLink className="w-4 h-4" />
+                                </a>
+                              )}
+                              <button 
+                                onClick={() => openEditForm(scheme)} 
+                                className="btn-icon"
+                                title="Edit"
+                              >
+                                <Pencil className="w-4 h-4" />
+                              </button>
+                              <button 
+                                onClick={() => setDeleteTarget(scheme)} 
+                                className="btn-icon hover:!text-red-600"
+                                title="Delete"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
-        {/* ─── Users Tab ───────────────────────────────────────────────────── */}
+        {/* Users Tab */}
         {activeTab === 'users' && (
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Registered Users</h2>
+          <div className="card animate-fadeIn">
+            <div className="card-header flex-col sm:flex-row gap-4">
+              <h2 className="text-base font-semibold text-neutral-900">Registered Users</h2>
               <form onSubmit={handleUserSearch} className="flex items-center gap-2">
                 <div className="relative">
-                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
                   <input
                     type="text"
                     value={userSearch}
                     onChange={(e) => setUserSearch(e.target.value)}
                     placeholder="Search users..."
-                    className="pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 w-60"
+                    className="input pl-9 w-60"
                   />
                 </div>
-                <button type="submit" className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors">
+                <button type="submit" className="btn-primary">
                   Search
                 </button>
               </form>
             </div>
 
-            {isLoadingUsers ? (
-              <div className="flex justify-center py-12">
-                <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
-              </div>
-            ) : users.length === 0 ? (
-              <p className="text-center py-8 text-gray-500 dark:text-gray-400">No users found</p>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-200 dark:border-gray-700">
-                      <th className="text-left py-3 px-2 text-gray-600 dark:text-gray-400 font-medium">Name</th>
-                      <th className="text-left py-3 px-2 text-gray-600 dark:text-gray-400 font-medium">Email</th>
-                      <th className="text-left py-3 px-2 text-gray-600 dark:text-gray-400 font-medium hidden md:table-cell">Phone</th>
-                      <th className="text-left py-3 px-2 text-gray-600 dark:text-gray-400 font-medium hidden lg:table-cell">State</th>
-                      <th className="text-left py-3 px-2 text-gray-600 dark:text-gray-400 font-medium hidden lg:table-cell">Role</th>
-                      <th className="text-left py-3 px-2 text-gray-600 dark:text-gray-400 font-medium">Joined</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {users.map((u) => (
-                      <tr key={u._id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                        <td className="py-3 px-2 font-medium text-gray-900 dark:text-white">{u.name}</td>
-                        <td className="py-3 px-2 text-gray-600 dark:text-gray-300">{u.email}</td>
-                        <td className="py-3 px-2 text-gray-600 dark:text-gray-300 hidden md:table-cell">{u.phone || '—'}</td>
-                        <td className="py-3 px-2 text-gray-600 dark:text-gray-300 hidden lg:table-cell">{u.location?.state || '—'}</td>
-                        <td className="py-3 px-2 hidden lg:table-cell">
-                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                            u.role === 'admin'
-                              ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
-                              : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
-                          }`}>
-                            {u.role}
-                          </span>
-                        </td>
-                        <td className="py-3 px-2 text-gray-500 dark:text-gray-400 text-xs">
-                          {new Date(u.createdAt).toLocaleDateString()}
-                        </td>
+            <div className="card-body p-0">
+              {isLoadingUsers ? (
+                <div className="flex justify-center py-12">
+                  <Loader2 className="w-6 h-6 animate-spin text-neutral-400" />
+                </div>
+              ) : users.length === 0 ? (
+                <div className="empty-state py-12">
+                  <Users className="w-10 h-10 text-neutral-300 mx-auto mb-3" />
+                  <p className="text-neutral-600 font-medium">No users found</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-neutral-200">
+                        <th className="text-left py-3 px-4 text-neutral-500 font-medium text-xs uppercase tracking-wider">Name</th>
+                        <th className="text-left py-3 px-4 text-neutral-500 font-medium text-xs uppercase tracking-wider">Email</th>
+                        <th className="text-left py-3 px-4 text-neutral-500 font-medium text-xs uppercase tracking-wider hidden md:table-cell">Phone</th>
+                        <th className="text-left py-3 px-4 text-neutral-500 font-medium text-xs uppercase tracking-wider hidden lg:table-cell">State</th>
+                        <th className="text-left py-3 px-4 text-neutral-500 font-medium text-xs uppercase tracking-wider hidden lg:table-cell">Role</th>
+                        <th className="text-left py-3 px-4 text-neutral-500 font-medium text-xs uppercase tracking-wider">Joined</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+                    </thead>
+                    <tbody>
+                      {users.map((u) => (
+                        <tr key={u._id} className="border-b border-neutral-100 hover:bg-neutral-50 transition-colors">
+                          <td className="py-3 px-4 font-medium text-neutral-900">{u.name}</td>
+                          <td className="py-3 px-4 text-neutral-600">{u.email}</td>
+                          <td className="py-3 px-4 text-neutral-600 hidden md:table-cell">{u.phone || '—'}</td>
+                          <td className="py-3 px-4 text-neutral-600 hidden lg:table-cell">{u.location?.state || '—'}</td>
+                          <td className="py-3 px-4 hidden lg:table-cell">
+                            <span className={`chip ${u.role === 'admin' ? 'chip-active' : ''}`}>
+                              {u.role}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-neutral-500 text-xs">
+                            {new Date(u.createdAt).toLocaleDateString()}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
           </div>
         )}
-      </div>
+      </main>
 
-      {/* ─── Create / Edit Scheme Modal ──────────────────────────────────────── */}
+      {/* Create / Edit Scheme Modal */}
       {showForm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+        <div className="modal-overlay" onClick={() => setShowForm(false)}>
+          <div 
+            className="modal w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-scaleIn"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between p-4 border-b border-neutral-200">
+              <h3 className="text-base font-semibold text-neutral-900">
                 {editingScheme ? 'Edit Scheme' : 'Add New Scheme'}
               </h3>
-              <button onClick={() => setShowForm(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
-                <X className="w-5 h-5 text-gray-500" />
+              <button onClick={() => setShowForm(false)} className="btn-icon">
+                <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+            <form onSubmit={handleSubmit} className="p-4 space-y-4">
               {/* Title */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title *</label>
+                <label className="block text-sm font-medium text-neutral-700 mb-1.5">
+                  Title <span className="text-red-500">*</span>
+                </label>
                 <input
                   name="title"
                   value={form.title}
                   onChange={handleFormChange}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="input"
                   placeholder="e.g. PM-KISAN Samman Nidhi"
                 />
               </div>
 
               {/* Description */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description *</label>
+                <label className="block text-sm font-medium text-neutral-700 mb-1.5">
+                  Description <span className="text-red-500">*</span>
+                </label>
                 <textarea
                   name="description"
                   value={form.description}
                   onChange={handleFormChange}
                   required
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="input resize-none"
                   placeholder="Brief description of the scheme"
                 />
               </div>
@@ -512,12 +548,14 @@ const AdminDashboard = () => {
               {/* Type + State */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Type *</label>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1.5">
+                    Type <span className="text-red-500">*</span>
+                  </label>
                   <select
                     name="type"
                     value={form.type}
                     onChange={handleFormChange}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    className="select"
                   >
                     <option value="central">Central (All India)</option>
                     <option value="state">State-Specific</option>
@@ -525,13 +563,15 @@ const AdminDashboard = () => {
                 </div>
                 {form.type === 'state' && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">State *</label>
+                    <label className="block text-sm font-medium text-neutral-700 mb-1.5">
+                      State <span className="text-red-500">*</span>
+                    </label>
                     <select
                       name="state"
                       value={form.state}
                       onChange={handleFormChange}
                       required
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      className="select"
                     >
                       <option value="">Select State</option>
                       {INDIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
@@ -543,22 +583,22 @@ const AdminDashboard = () => {
               {/* Category + Ministry */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1.5">Category</label>
                   <input
                     name="category"
                     value={form.category}
                     onChange={handleFormChange}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                    placeholder="e.g. Income Support, Crop Insurance"
+                    className="input"
+                    placeholder="e.g. Income Support"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ministry</label>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1.5">Ministry</label>
                   <input
                     name="ministry"
                     value={form.ministry}
                     onChange={handleFormChange}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    className="input"
                     placeholder="e.g. Ministry of Agriculture"
                   />
                 </div>
@@ -566,76 +606,75 @@ const AdminDashboard = () => {
 
               {/* Benefits */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Benefits</label>
+                <label className="block text-sm font-medium text-neutral-700 mb-1.5">Benefits</label>
                 <input
                   name="benefits"
                   value={form.benefits}
                   onChange={handleFormChange}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="input"
                   placeholder="e.g. ₹6,000 per year in 3 installments"
                 />
               </div>
 
               {/* Eligibility */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Eligibility</label>
+                <label className="block text-sm font-medium text-neutral-700 mb-1.5">Eligibility</label>
                 <input
                   name="eligibility"
                   value={form.eligibility}
                   onChange={handleFormChange}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="input"
                   placeholder="e.g. All land-holding farmer families"
                 />
               </div>
 
-              {/* Government Portal Link */}
+              {/* Portal Link */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Government Portal Link
-                </label>
+                <label className="block text-sm font-medium text-neutral-700 mb-1.5">Government Portal Link</label>
                 <input
                   name="link"
                   value={form.link}
                   onChange={handleFormChange}
                   type="url"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="input"
                   placeholder="https://pmkisan.gov.in"
                 />
               </div>
 
               {/* Active toggle */}
-              <div className="flex items-center gap-3">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Active</label>
+              <div className="flex items-center gap-3 py-2">
+                <label className="text-sm font-medium text-neutral-700">Status</label>
                 <button
                   type="button"
                   onClick={() => setForm(prev => ({ ...prev, isActive: !prev.isActive }))}
                   className="focus:outline-none"
                 >
-                  {form.isActive
-                    ? <ToggleRight className="w-8 h-8 text-green-500" />
-                    : <ToggleLeft className="w-8 h-8 text-gray-400" />
-                  }
+                  {form.isActive ? (
+                    <ToggleRight className="w-7 h-7 text-primary-500" />
+                  ) : (
+                    <ToggleLeft className="w-7 h-7 text-neutral-400" />
+                  )}
                 </button>
-                <span className="text-sm text-gray-500 dark:text-gray-400">
-                  {form.isActive ? 'Visible to farmers' : 'Hidden from farmers'}
+                <span className="text-sm text-neutral-500">
+                  {form.isActive ? 'Active - Visible to farmers' : 'Inactive - Hidden'}
                 </span>
               </div>
 
               {/* Buttons */}
-              <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex justify-end gap-3 pt-4 border-t border-neutral-100">
                 <button
                   type="button"
                   onClick={() => setShowForm(false)}
-                  className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 font-medium"
+                  className="btn-secondary"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white rounded-lg font-medium flex items-center gap-2"
+                  className="btn-primary"
                 >
-                  {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {isSubmitting && <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />}
                   {editingScheme ? 'Update Scheme' : 'Create Scheme'}
                 </button>
               </div>
@@ -644,32 +683,37 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      {/* ─── Delete Confirmation Modal ───────────────────────────────────────── */}
+      {/* Delete Confirmation Modal */}
       {deleteTarget && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center">
-                <Trash2 className="w-5 h-5 text-red-600 dark:text-red-400" />
+        <div className="modal-overlay" onClick={() => setDeleteTarget(null)}>
+          <div 
+            className="modal w-full max-w-md animate-scaleIn"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 bg-red-50 rounded-sm flex items-center justify-center">
+                  <Trash2 className="w-5 h-5 text-red-600" />
+                </div>
+                <h3 className="text-base font-semibold text-neutral-900">Delete Scheme</h3>
               </div>
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white">Delete Scheme</h3>
-            </div>
-            <p className="text-gray-600 dark:text-gray-300 mb-6">
-              Are you sure you want to delete <strong>"{deleteTarget.title}"</strong>? This action cannot be undone.
-            </p>
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setDeleteTarget(null)}
-                className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 font-medium"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDelete}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium"
-              >
-                Delete
-              </button>
+              <p className="text-sm text-neutral-600 mb-6">
+                Are you sure you want to delete <span className="font-medium text-neutral-900">"{deleteTarget.title}"</span>? This action cannot be undone.
+              </p>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setDeleteTarget(null)}
+                  className="btn-secondary"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDelete}
+                  className="btn-primary bg-red-600 hover:bg-red-700 border-red-600 hover:border-red-700"
+                >
+                  Delete
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -678,23 +722,17 @@ const AdminDashboard = () => {
   );
 };
 
-// ─── Stat Card Component ──────────────────────────────────────────────────────
-
-const colorMap = {
-  blue: 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400',
-  green: 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400',
-  purple: 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400',
-  orange: 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400'
-};
-
-const StatCard = ({ icon, label, value, color }) => (
-  <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-5 flex items-center gap-4">
-    <div className={`w-12 h-12 rounded-full flex items-center justify-center ${colorMap[color]}`}>
-      {icon}
-    </div>
-    <div>
-      <p className="text-2xl font-bold text-gray-900 dark:text-white">{value?.toLocaleString() ?? 0}</p>
-      <p className="text-sm text-gray-500 dark:text-gray-400">{label}</p>
+// Stat Card Component
+const StatCard = ({ icon, label, value }) => (
+  <div className="card p-4">
+    <div className="flex items-center gap-3">
+      <div className="w-10 h-10 bg-neutral-100 rounded-sm flex items-center justify-center text-neutral-600">
+        {icon}
+      </div>
+      <div>
+        <p className="text-xl font-semibold text-neutral-900">{value?.toLocaleString() ?? 0}</p>
+        <p className="text-xs text-neutral-500">{label}</p>
+      </div>
     </div>
   </div>
 );

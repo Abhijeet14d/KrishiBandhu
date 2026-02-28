@@ -1,31 +1,31 @@
 import { Link } from 'react-router-dom';
-import { Phone, CheckCircle, Shield, Headphones } from 'lucide-react';
+import { Phone, CheckCircle, Shield, Headphones, ArrowRight, Sparkles } from 'lucide-react';
 
 const Landing = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 transition-colors">
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 transition-colors">
       {/* Navigation */}
-      <nav className="bg-white dark:bg-gray-800 shadow-sm transition-colors">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <nav className="topbar sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-2">
-              <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
-                <Phone className="w-6 h-6 text-white" />
+            <Link to="/" className="flex items-center gap-3 group">
+              <div className="w-9 h-9 bg-primary-600 flex items-center justify-center rounded-sm transition-transform duration-150 group-hover:scale-105">
+                <Phone className="w-4 h-4 text-white" />
               </div>
-              <span className="text-2xl font-bold text-gray-900 dark:text-white">
+              <span className="text-lg font-semibold text-neutral-900 dark:text-white">
                 Farmer Assistant
               </span>
-            </div>
-            <div className="flex space-x-4">
+            </Link>
+            <div className="flex items-center gap-3">
               <Link
                 to="/login"
-                className="px-4 py-2 text-green-600 hover:text-green-700 font-medium"
+                className="btn-ghost"
               >
                 Login
               </Link>
               <Link
                 to="/register"
-                className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+                className="btn-primary"
               >
                 Get Started
               </Link>
@@ -35,112 +35,141 @@ const Landing = () => {
       </nav>
 
       {/* Hero Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="text-center">
-          <h1 className="text-5xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6">
+      <section className="content-canvas py-24 lg:py-32">
+        <div className="max-w-4xl mx-auto text-center animate-fade-in-up">
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-primary-50 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-800 rounded-sm text-sm text-primary-700 dark:text-primary-400 mb-8">
+            <Sparkles className="w-4 h-4" />
+            AI-Powered Agricultural Support
+          </div>
+
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-semibold text-neutral-900 dark:text-white mb-6 tracking-tight text-balance">
             Your Agricultural Assistant
             <br />
-            <span className="text-green-600">Available 24/7</span>
+            <span className="text-primary-600 dark:text-primary-400">Available 24/7</span>
           </h1>
-          <p className="text-xl text-gray-600 dark:text-gray-400 mb-8 max-w-3xl mx-auto">
+          
+          <p className="text-lg text-neutral-500 dark:text-neutral-400 mb-10 max-w-2xl mx-auto">
             Get instant answers to all your farming queries through voice calls powered by AI. 
-            No more waiting, no more confusion - just ask and get expert guidance.
+            No more waiting, no more confusion — just ask and get expert guidance.
           </p>
-          <Link
-            to="/register"
-            className="inline-flex items-center px-8 py-4 bg-green-600 text-white text-lg font-semibold rounded-lg hover:bg-green-700 transition-colors shadow-lg"
-          >
-            Start Free Trial
-            <Phone className="ml-2 w-5 h-5" />
-          </Link>
+          
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link
+              to="/register"
+              className="btn-primary px-8 py-3.5 text-base group"
+            >
+              Start Free Trial
+              <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
+            </Link>
+            <Link
+              to="/login"
+              className="btn-secondary px-8 py-3.5 text-base"
+            >
+              Sign In
+            </Link>
+          </div>
         </div>
 
         {/* Features */}
-        <div className="mt-24 grid md:grid-cols-3 gap-8">
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-md hover:shadow-lg transition-shadow">
-            <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center mb-4">
-              <Headphones className="w-6 h-6 text-green-600" />
+        <div className="mt-32 grid md:grid-cols-3 gap-6">
+          {[
+            {
+              icon: Headphones,
+              title: 'Voice-Based Queries',
+              description: 'Simply speak your questions in your preferred language and get instant voice responses.',
+              delay: 'stagger-1'
+            },
+            {
+              icon: CheckCircle,
+              title: 'AI-Powered Answers',
+              description: 'Get accurate agricultural advice powered by advanced AI trained on farming knowledge.',
+              delay: 'stagger-2'
+            },
+            {
+              icon: Shield,
+              title: 'Secure & Private',
+              description: 'Your conversations are encrypted and secure. Your privacy is our top priority.',
+              delay: 'stagger-3'
+            }
+          ].map((feature, index) => (
+            <div 
+              key={index}
+              className={`card card-hover p-8 animate-fade-in-up ${feature.delay}`}
+            >
+              <div className="w-10 h-10 bg-primary-100 dark:bg-primary-900/30 rounded-sm flex items-center justify-center mb-5">
+                <feature.icon className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-neutral-900 dark:text-white mb-2">
+                {feature.title}
+              </h3>
+              <p className="text-sm text-neutral-500 dark:text-neutral-400 leading-relaxed">
+                {feature.description}
+              </p>
             </div>
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-              Voice-Based Queries
-            </h3>
-            <p className="text-gray-600 dark:text-gray-400">
-              Simply speak your questions in your preferred language and get instant voice responses.
-            </p>
-          </div>
-
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-md hover:shadow-lg transition-shadow">
-            <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center mb-4">
-              <CheckCircle className="w-6 h-6 text-blue-600" />
-            </div>
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-              AI-Powered Answers
-            </h3>
-            <p className="text-gray-600 dark:text-gray-400">
-              Get accurate agricultural advice powered by advanced AI trained on farming knowledge.
-            </p>
-          </div>
-
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-md hover:shadow-lg transition-shadow">
-            <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center mb-4">
-              <Shield className="w-6 h-6 text-purple-600" />
-            </div>
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-              Secure & Private
-            </h3>
-            <p className="text-gray-600 dark:text-gray-400">
-              Your conversations are encrypted and secure. Your privacy is our top priority.
-            </p>
-          </div>
+          ))}
         </div>
 
         {/* How It Works */}
-        <div className="mt-24 bg-white dark:bg-gray-800 rounded-2xl p-12 shadow-lg transition-colors">
-          <h2 className="text-3xl font-bold text-center text-gray-900 dark:text-white mb-12">
-            How It Works
-          </h2>
-          <div className="grid md:grid-cols-4 gap-8">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl font-bold text-green-600">1</span>
-              </div>
-              <h4 className="font-semibold text-gray-900 dark:text-white mb-2">Register</h4>
-              <p className="text-gray-600 dark:text-gray-400 text-sm">Create your free account in seconds</p>
-            </div>
-
-            <div className="text-center">
-              <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl font-bold text-green-600">2</span>
-              </div>
-              <h4 className="font-semibold text-gray-900 dark:text-white mb-2">Call</h4>
-              <p className="text-gray-600 dark:text-gray-400 text-sm">Start a voice call from dashboard</p>
-            </div>
-
-            <div className="text-center">
-              <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl font-bold text-green-600">3</span>
-              </div>
-              <h4 className="font-semibold text-gray-900 dark:text-white mb-2">Ask</h4>
-              <p className="text-gray-600 dark:text-gray-400 text-sm">Speak your farming questions</p>
-            </div>
-
-            <div className="text-center">
-              <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl font-bold text-green-600">4</span>
-              </div>
-              <h4 className="font-semibold text-gray-900 dark:text-white mb-2">Get Answers</h4>
-              <p className="text-gray-600 dark:text-gray-400 text-sm">Receive expert guidance instantly</p>
+        <div className="mt-32">
+          <div className="card p-12 animate-fade-in">
+            <h2 className="text-2xl font-semibold text-center text-neutral-900 dark:text-white mb-12">
+              How It Works
+            </h2>
+            <div className="grid md:grid-cols-4 gap-8">
+              {[
+                { step: '01', title: 'Register', description: 'Create your free account in seconds' },
+                { step: '02', title: 'Call', description: 'Start a voice call from dashboard' },
+                { step: '03', title: 'Ask', description: 'Speak your farming questions' },
+                { step: '04', title: 'Get Answers', description: 'Receive expert guidance instantly' }
+              ].map((item, index) => (
+                <div key={index} className="text-center group">
+                  <div className="w-14 h-14 bg-primary-600 rounded-sm flex items-center justify-center mx-auto mb-4 transition-transform duration-200 group-hover:scale-105">
+                    <span className="text-sm font-semibold text-white">{item.step}</span>
+                  </div>
+                  <h4 className="font-semibold text-neutral-900 dark:text-white mb-2">{item.title}</h4>
+                  <p className="text-sm text-neutral-500 dark:text-neutral-400">{item.description}</p>
+                </div>
+              ))}
             </div>
           </div>
         </div>
-      </div>
+
+        {/* CTA Section */}
+        <div className="mt-32 text-center">
+          <div className="inline-block gradient-border rounded-sm p-12">
+            <h2 className="text-2xl font-semibold text-neutral-900 dark:text-white mb-4">
+              Ready to transform your farming?
+            </h2>
+            <p className="text-neutral-500 dark:text-neutral-400 mb-8">
+              Join thousands of farmers already using AI-powered assistance.
+            </p>
+            <Link
+              to="/register"
+              className="btn-primary px-8 py-3"
+            >
+              Get Started for Free
+            </Link>
+          </div>
+        </div>
+      </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white mt-24 py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <p className="text-gray-400">
-            © 2025 Farmer Assistant. Empowering farmers with technology.
-          </p>
+      <footer className="border-t border-neutral-200 dark:border-neutral-800 mt-24">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-primary-600 flex items-center justify-center rounded-sm">
+                <Phone className="w-4 h-4 text-white" />
+              </div>
+              <span className="font-semibold text-neutral-900 dark:text-white">
+                Farmer Assistant
+              </span>
+            </div>
+            <p className="text-sm text-neutral-500">
+              © 2026 Farmer Assistant. Empowering farmers with technology.
+            </p>
+          </div>
         </div>
       </footer>
     </div>

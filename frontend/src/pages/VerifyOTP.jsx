@@ -10,7 +10,7 @@ const VerifyOTP = () => {
   const { verifyOTP, resendOTP, isLoading } = useAuthStore();
 
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
-  const [timer, setTimer] = useState(300); // 5 minutes
+  const [timer, setTimer] = useState(300);
   const [canResend, setCanResend] = useState(false);
 
   const userId = location.state?.userId;
@@ -43,7 +43,6 @@ const VerifyOTP = () => {
     newOtp[index] = value;
     setOtp(newOtp);
 
-    // Auto focus next input
     if (value && index < 5) {
       document.getElementById(`otp-${index + 1}`).focus();
     }
@@ -96,34 +95,32 @@ const VerifyOTP = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center px-4 transition-colors">
+    <div className="min-h-screen bg-neutral-50 flex items-center justify-center px-4">
       <div className="max-w-md w-full">
-        {/* Back Button */}
         <button
           onClick={() => navigate('/register')}
-          className="inline-flex items-center text-green-600 hover:text-green-700 mb-8"
+          className="btn-ghost inline-flex mb-6"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Register
         </button>
 
-        {/* Verify Card */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 transition-colors">
+        <div className="card p-8 animate-fadeIn">
           <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Mail className="w-8 h-8 text-green-600" />
+            <div className="w-14 h-14 bg-neutral-100 rounded-sm flex items-center justify-center mx-auto mb-4">
+              <Mail className="w-7 h-7 text-neutral-600" />
             </div>
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Verify Your Email</h2>
-            <p className="text-gray-600 dark:text-gray-400 mt-2">
+            <h2 className="text-2xl font-semibold text-neutral-900">Verify Your Email</h2>
+            <p className="text-sm text-neutral-500 mt-2">
               We've sent a 6-digit code to
               <br />
-              <span className="font-semibold">{email}</span>
+              <span className="font-medium text-neutral-900">{email}</span>
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* OTP Input */}
-            <div className="flex justify-center space-x-3">
+            <div className="flex justify-center gap-2 sm:gap-3">
               {otp.map((digit, index) => (
                 <input
                   key={index}
@@ -133,7 +130,7 @@ const VerifyOTP = () => {
                   value={digit}
                   onChange={(e) => handleChange(index, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(index, e)}
-                  className="w-12 h-14 text-center text-2xl font-bold border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition"
+                  className="w-10 h-12 sm:w-12 sm:h-14 text-center text-xl font-semibold border border-neutral-300 bg-white text-neutral-900 rounded-sm focus:ring-2 focus:ring-neutral-900 focus:border-neutral-900 outline-none transition"
                 />
               ))}
             </div>
@@ -141,12 +138,12 @@ const VerifyOTP = () => {
             {/* Timer */}
             <div className="text-center">
               {timer > 0 ? (
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-sm text-neutral-500">
                   OTP expires in{' '}
-                  <span className="font-semibold text-green-600">{formatTime(timer)}</span>
+                  <span className="font-medium text-neutral-900">{formatTime(timer)}</span>
                 </p>
               ) : (
-                <p className="text-red-600 font-semibold">OTP has expired</p>
+                <p className="text-sm text-red-600 font-medium">OTP has expired</p>
               )}
             </div>
 
@@ -154,11 +151,11 @@ const VerifyOTP = () => {
             <button
               type="submit"
               disabled={isLoading || otp.join('').length !== 6}
-              className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              className="btn-primary w-full justify-center"
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   Verifying...
                 </>
               ) : (
@@ -169,12 +166,12 @@ const VerifyOTP = () => {
 
           {/* Resend */}
           <div className="text-center mt-6">
-            <p className="text-gray-600 dark:text-gray-400">
+            <p className="text-sm text-neutral-500">
               Didn't receive the code?{' '}
               <button
                 onClick={handleResend}
                 disabled={!canResend || isLoading}
-                className="text-green-600 hover:text-green-700 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                className="text-neutral-900 font-medium hover:underline disabled:opacity-50 disabled:cursor-not-allowed disabled:no-underline"
               >
                 Resend OTP
               </button>

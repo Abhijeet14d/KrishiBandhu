@@ -24,7 +24,6 @@ const VoiceCall = () => {
   const { user } = useAuthStore();
   const { addMessage, messages, setCurrentConversation, clearCurrentConversation, updateTitle } = useConversationStore();
   
-  // Get token from localStorage
   const accessToken = localStorage.getItem('accessToken');
 
   // State
@@ -36,7 +35,7 @@ const VoiceCall = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [transcript, setTranscript] = useState('');
-  const [finalTranscript, setFinalTranscript] = useState(''); // Accumulated final transcript
+  const [finalTranscript, setFinalTranscript] = useState('');
   const [conversationId, setConversationId] = useState(null);
   const [callDuration, setCallDuration] = useState(0);
   const [error, setError] = useState(null);
@@ -88,9 +87,9 @@ const VoiceCall = () => {
     }
 
     const recognition = new SpeechRecognition();
-    recognition.continuous = true; // Keep listening until manually stopped
+    recognition.continuous = true;
     recognition.interimResults = true;
-    recognition.lang = 'en-IN'; // Indian English, can be changed
+    recognition.lang = 'en-IN';
 
     recognition.onstart = () => {
       console.log('Speech recognition started');
@@ -113,7 +112,6 @@ const VoiceCall = () => {
         }
       }
 
-      // Update the display transcript (final + interim)
       setFinalTranscript(accumulatedFinal.trim());
       setTranscript(accumulatedFinal + interimTranscript);
     };
@@ -123,7 +121,6 @@ const VoiceCall = () => {
       setIsListening(false);
       
       if (event.error === 'no-speech') {
-        // Don't show error for no-speech, user might just be pausing
         console.log('No speech detected, continuing...');
       } else if (event.error === 'not-allowed') {
         toast.error('Microphone access denied. Please enable microphone permissions.');
@@ -132,7 +129,6 @@ const VoiceCall = () => {
 
     recognition.onend = () => {
       console.log('Speech recognition ended');
-      // Don't auto-restart - we want user to manually control
       setIsListening(false);
     };
 
@@ -145,7 +141,6 @@ const VoiceCall = () => {
       const voices = synthesisRef.current.getVoices();
       if (voices.length > 0) {
         setAvailableVoices(voices);
-        // Set default voice (prefer Indian English or Google voices)
         const defaultVoice = voices.find(v => 
           v.lang.includes('en-IN') || v.name.includes('Google') || v.lang.includes('hi-IN')
         ) || voices.find(v => v.lang.includes('en')) || voices[0];
@@ -155,7 +150,6 @@ const VoiceCall = () => {
     };
 
     loadVoices();
-    // Chrome loads voices async
     synthesisRef.current.onvoiceschanged = loadVoices;
   }, []);
 
@@ -163,14 +157,12 @@ const VoiceCall = () => {
   const speak = useCallback((text) => {
     if (!isSpeakerOn) return;
 
-    // Cancel any ongoing speech
     synthesisRef.current.cancel();
 
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.rate = speechRate;
     utterance.pitch = speechPitch;
 
-    // Use selected voice or fallback
     if (selectedVoice) {
       utterance.voice = selectedVoice;
       utterance.lang = selectedVoice.lang;
@@ -181,7 +173,6 @@ const VoiceCall = () => {
     utterance.onstart = () => setIsSpeaking(true);
     utterance.onend = () => {
       setIsSpeaking(false);
-      // Don't auto-start listening - user controls when to speak
     };
     utterance.onerror = () => setIsSpeaking(false);
 
@@ -220,10 +211,7 @@ const VoiceCall = () => {
 
     connect();
 
-    // Initialize speech recognition
     recognitionRef.current = initializeSpeechRecognition();
-
-    // Load voices
     synthesisRef.current.getVoices();
 
     return () => {
@@ -250,7 +238,6 @@ const VoiceCall = () => {
         messages: []
       });
       
-      // Add welcome message
       addMessage({
         role: 'assistant',
         content: response.welcomeMessage,
@@ -260,14 +247,11 @@ const VoiceCall = () => {
       setIsCallActive(true);
       setIsMicOn(true);
       
-      // Start call timer
       callTimerRef.current = setInterval(() => {
         setCallDuration(prev => prev + 1);
       }, 1000);
 
-      // Speak welcome message
       speak(response.welcomeMessage);
-
       toast.success('Call started!');
     } catch (error) {
       console.error('Failed to start call:', error);
@@ -284,7 +268,6 @@ const VoiceCall = () => {
         await socketService.endConversation(conversationId);
       }
       
-      // Stop everything
       if (callTimerRef.current) {
         clearInterval(callTimerRef.current);
       }
@@ -300,7 +283,6 @@ const VoiceCall = () => {
 
       toast.success(`Call ended. Duration: ${formatDuration(callDuration)}`);
       
-      // Navigate back to dashboard
       setTimeout(() => {
         clearCurrentConversation();
         navigate('/dashboard');
@@ -330,30 +312,25 @@ const VoiceCall = () => {
       setIsProcessing(true);
       console.log('Sending message to AI...');
       
-      // Add user message
       addMessage({
         role: 'user',
         content: text,
         timestamp: new Date()
       });
 
-      // Send to AI
       const response = await socketService.sendMessage(conversationId, text);
       console.log('Got response from AI:', response);
       
-      // Add AI response
       addMessage({
         role: 'assistant',
         content: response.response,
         timestamp: new Date()
       });
 
-      // Update title if changed
       if (response.title) {
         updateTitle(response.title);
       }
 
-      // Speak the response
       speak(response.response);
     } catch (error) {
       console.error('Failed to send message:', error);
@@ -364,7 +341,6 @@ const VoiceCall = () => {
     }
   };
 
-  // Keep the ref updated with latest handleSendMessage
   useEffect(() => {
     handleSendMessageRef.current = handleSendMessage;
   }, [conversationId, speak, addMessage, updateTitle]);
@@ -424,12 +400,10 @@ const VoiceCall = () => {
     }
 
     if (isListening) {
-      // Stop listening and send the message
       console.log('Stopping speech recognition and sending message...');
       recognitionRef.current.stop();
       setIsListening(false);
       
-      // Send the accumulated transcript
       const textToSend = finalTranscript || transcript;
       if (textToSend && textToSend.trim()) {
         console.log('Sending accumulated transcript:', textToSend);
@@ -440,7 +414,6 @@ const VoiceCall = () => {
       setTranscript('');
       setFinalTranscript('');
     } else {
-      // Start listening
       try {
         console.log('Starting speech recognition...');
         setTranscript('');
@@ -453,11 +426,6 @@ const VoiceCall = () => {
     }
   };
 
-  // Start listening (manual trigger) - kept for backward compatibility
-  const startListening = () => {
-    toggleListening();
-  };
-
   // Format duration
   const formatDuration = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -468,16 +436,16 @@ const VoiceCall = () => {
   // Render error state
   if (error && !isConnected) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md text-center">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <PhoneOff className="w-8 h-8 text-red-600" />
+      <div className="min-h-screen bg-neutral-50 flex items-center justify-center p-4">
+        <div className="card p-8 max-w-md text-center animate-fadeIn">
+          <div className="w-14 h-14 bg-red-50 rounded-sm flex items-center justify-center mx-auto mb-4">
+            <PhoneOff className="w-7 h-7 text-red-600" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Connection Error</h2>
-          <p className="text-gray-600 mb-6">{error}</p>
+          <h2 className="text-xl font-semibold text-neutral-900 mb-2">Connection Error</h2>
+          <p className="text-sm text-neutral-600 mb-6">{error}</p>
           <button
             onClick={() => navigate('/dashboard')}
-            className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            className="btn-primary"
           >
             Back to Dashboard
           </button>
@@ -487,13 +455,13 @@ const VoiceCall = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 flex flex-col">
+    <div className="min-h-screen bg-neutral-900 flex flex-col">
       {/* Browser Compatibility Warning */}
       {browserWarning && (
-        <div className="bg-yellow-600/90 text-white px-4 py-3 flex items-center justify-center gap-3 text-sm">
+        <div className="bg-amber-500/90 text-neutral-900 px-4 py-3 flex items-center justify-center gap-3 text-sm">
           <AlertTriangle className="w-5 h-5 flex-shrink-0" />
           <span>{browserWarning}</span>
-          <button onClick={() => setBrowserWarning('')} className="ml-2 hover:text-yellow-200">
+          <button onClick={() => setBrowserWarning('')} className="ml-2 hover:text-neutral-700">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -501,100 +469,103 @@ const VoiceCall = () => {
 
       {/* Voice Settings Modal */}
       {showVoiceSettings && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-gray-800 rounded-2xl p-6 w-full max-w-md border border-gray-700">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-white">Voice Settings</h2>
-              <button
-                onClick={() => setShowVoiceSettings(false)}
-                className="text-gray-400 hover:text-white"
-              >
-                <X className="w-6 h-6" />
+        <div className="modal-overlay" onClick={() => setShowVoiceSettings(false)}>
+          <div 
+            className="modal w-full max-w-md animate-scaleIn"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between p-4 border-b border-neutral-200">
+              <h2 className="text-base font-semibold text-neutral-900">Voice Settings</h2>
+              <button onClick={() => setShowVoiceSettings(false)} className="btn-icon">
+                <X className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Voice Selection */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Voice ({availableVoices.length} available)
-              </label>
-              <select
-                value={selectedVoice?.name || ''}
-                onChange={(e) => {
-                  const voice = availableVoices.find(v => v.name === e.target.value);
-                  setSelectedVoice(voice);
-                }}
-                className="w-full bg-gray-700 text-white rounded-lg px-4 py-2 border border-gray-600 focus:ring-2 focus:ring-green-500"
+            <div className="p-4 space-y-5">
+              {/* Voice Selection */}
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1.5">
+                  Voice ({availableVoices.length} available)
+                </label>
+                <select
+                  value={selectedVoice?.name || ''}
+                  onChange={(e) => {
+                    const voice = availableVoices.find(v => v.name === e.target.value);
+                    setSelectedVoice(voice);
+                  }}
+                  className="select"
+                >
+                  {availableVoices.map((voice) => (
+                    <option key={voice.name} value={voice.name}>
+                      {voice.name} ({voice.lang})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Speech Rate */}
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1.5">
+                  Speed: {speechRate.toFixed(1)}x
+                </label>
+                <input
+                  type="range"
+                  min="0.5"
+                  max="2"
+                  step="0.1"
+                  value={speechRate}
+                  onChange={(e) => setSpeechRate(parseFloat(e.target.value))}
+                  className="w-full accent-neutral-900"
+                />
+                <div className="flex justify-between text-xs text-neutral-500 mt-1">
+                  <span>Slow</span>
+                  <span>Normal</span>
+                  <span>Fast</span>
+                </div>
+              </div>
+
+              {/* Speech Pitch */}
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1.5">
+                  Pitch: {speechPitch.toFixed(1)}
+                </label>
+                <input
+                  type="range"
+                  min="0.5"
+                  max="2"
+                  step="0.1"
+                  value={speechPitch}
+                  onChange={(e) => setSpeechPitch(parseFloat(e.target.value))}
+                  className="w-full accent-neutral-900"
+                />
+                <div className="flex justify-between text-xs text-neutral-500 mt-1">
+                  <span>Low</span>
+                  <span>Normal</span>
+                  <span>High</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 border-t border-neutral-100">
+              <button
+                onClick={testVoice}
+                disabled={isSpeaking}
+                className="btn-primary w-full justify-center"
               >
-                {availableVoices.map((voice) => (
-                  <option key={voice.name} value={voice.name}>
-                    {voice.name} ({voice.lang})
-                  </option>
-                ))}
-              </select>
+                {isSpeaking ? 'Speaking...' : 'Test Voice'}
+              </button>
             </div>
-
-            {/* Speech Rate */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Speed: {speechRate.toFixed(1)}x
-              </label>
-              <input
-                type="range"
-                min="0.5"
-                max="2"
-                step="0.1"
-                value={speechRate}
-                onChange={(e) => setSpeechRate(parseFloat(e.target.value))}
-                className="w-full accent-green-500"
-              />
-              <div className="flex justify-between text-xs text-gray-500 mt-1">
-                <span>Slow</span>
-                <span>Normal</span>
-                <span>Fast</span>
-              </div>
-            </div>
-
-            {/* Speech Pitch */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Pitch: {speechPitch.toFixed(1)}
-              </label>
-              <input
-                type="range"
-                min="0.5"
-                max="2"
-                step="0.1"
-                value={speechPitch}
-                onChange={(e) => setSpeechPitch(parseFloat(e.target.value))}
-                className="w-full accent-green-500"
-              />
-              <div className="flex justify-between text-xs text-gray-500 mt-1">
-                <span>Low</span>
-                <span>Normal</span>
-                <span>High</span>
-              </div>
-            </div>
-
-            {/* Test Button */}
-            <button
-              onClick={testVoice}
-              disabled={isSpeaking}
-              className="w-full py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white rounded-lg font-medium transition-colors"
-            >
-              {isSpeaking ? 'Speaking...' : 'Test Voice'}
-            </button>
           </div>
         </div>
       )}
 
       {/* Header */}
-      <header className="bg-gray-800/50 backdrop-blur border-b border-gray-700 p-4">
+      <header className="bg-neutral-800/50 backdrop-blur border-b border-neutral-700 p-4">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <button
             onClick={() => isCallActive ? null : navigate('/dashboard')}
             disabled={isCallActive}
-            className="flex items-center text-gray-300 hover:text-white disabled:opacity-50"
+            className="flex items-center text-neutral-400 hover:text-white disabled:opacity-50 transition-colors"
           >
             <ArrowLeft className="w-5 h-5 mr-2" />
             Back
@@ -602,12 +573,12 @@ const VoiceCall = () => {
           <div className="text-center">
             <h1 className="text-white font-semibold">Farmer Assistant</h1>
             {isCallActive && (
-              <p className="text-green-400 text-sm">{formatDuration(callDuration)}</p>
+              <p className="text-primary-500 text-sm font-medium">{formatDuration(callDuration)}</p>
             )}
           </div>
           <button
             onClick={() => setShowVoiceSettings(true)}
-            className="flex items-center text-gray-300 hover:text-white p-2 rounded-lg hover:bg-gray-700"
+            className="flex items-center text-neutral-400 hover:text-white p-2 rounded-sm hover:bg-neutral-700 transition-colors"
             title="Voice Settings"
           >
             <Settings className="w-5 h-5" />
@@ -618,13 +589,13 @@ const VoiceCall = () => {
       {/* Main Content */}
       <main className="flex-1 flex flex-col max-w-4xl mx-auto w-full p-4">
         {/* Messages Area */}
-        <div className="flex-1 bg-gray-800/30 rounded-2xl backdrop-blur border border-gray-700 mb-4 overflow-hidden">
-          <div className="h-full overflow-y-auto p-4 space-y-4" style={{ maxHeight: 'calc(100vh - 350px)' }}>
+        <div className="flex-1 bg-neutral-800/30 rounded-sm border border-neutral-700 mb-4 overflow-hidden">
+          <div className="h-full overflow-y-auto p-4 space-y-3" style={{ maxHeight: 'calc(100vh - 350px)' }}>
             {messages.length === 0 ? (
-              <div className="h-full flex items-center justify-center text-gray-400">
+              <div className="h-full flex items-center justify-center text-neutral-500">
                 <div className="text-center">
-                  <MessageCircle className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                  <p>Start a call to begin your conversation</p>
+                  <MessageCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p className="text-sm">Start a call to begin your conversation</p>
                 </div>
               </div>
             ) : (
@@ -634,10 +605,10 @@ const VoiceCall = () => {
                   className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
                   <div
-                    className={`max-w-[80%] rounded-2xl px-4 py-3 ${
+                    className={`max-w-[80%] rounded-sm px-4 py-3 ${
                       msg.role === 'user'
-                        ? 'bg-green-600 text-white'
-                        : 'bg-gray-700 text-gray-100'
+                        ? 'bg-neutral-100 text-neutral-900'
+                        : 'bg-neutral-700 text-neutral-100'
                     }`}
                   >
                     <p className="text-sm">{msg.content}</p>
@@ -647,7 +618,7 @@ const VoiceCall = () => {
             )}
             {isProcessing && (
               <div className="flex justify-start">
-                <div className="bg-gray-700 text-gray-100 rounded-2xl px-4 py-3">
+                <div className="bg-neutral-700 text-neutral-100 rounded-sm px-4 py-3">
                   <Loader2 className="w-5 h-5 animate-spin" />
                 </div>
               </div>
@@ -658,8 +629,8 @@ const VoiceCall = () => {
 
         {/* Transcript Display */}
         {(isListening || transcript) && (
-          <div className="bg-gray-800/50 rounded-xl p-4 mb-4 border border-gray-700">
-            <p className="text-gray-300 text-sm">
+          <div className="bg-neutral-800/50 rounded-sm p-4 mb-4 border border-neutral-700">
+            <p className="text-sm text-neutral-300">
               {isListening ? (
                 <span className="flex items-center">
                   <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse mr-2"></span>
@@ -673,15 +644,15 @@ const VoiceCall = () => {
         )}
 
         {/* Status Indicators */}
-        <div className="flex justify-center gap-4 mb-4">
+        <div className="flex justify-center gap-3 mb-4">
           {isSpeaking && (
-            <div className="bg-blue-600/20 text-blue-400 px-4 py-2 rounded-full text-sm flex items-center">
+            <div className="bg-accent-500/20 text-accent-500 px-4 py-2 rounded-sm text-sm flex items-center">
               <Volume2 className="w-4 h-4 mr-2 animate-pulse" />
               AI is speaking...
             </div>
           )}
           {isListening && (
-            <div className="bg-green-600/20 text-green-400 px-4 py-2 rounded-full text-sm flex items-center">
+            <div className="bg-primary-500/20 text-primary-500 px-4 py-2 rounded-sm text-sm flex items-center">
               <Mic className="w-4 h-4 mr-2 animate-pulse" />
               Listening...
             </div>
@@ -689,77 +660,75 @@ const VoiceCall = () => {
         </div>
 
         {/* Controls */}
-        <div className="bg-gray-800/50 backdrop-blur rounded-2xl border border-gray-700 p-6">
+        <div className="bg-neutral-800/50 backdrop-blur rounded-sm border border-neutral-700 p-6">
           {!isCallActive ? (
-            // Pre-call state
             <div className="text-center">
               <div className="mb-6">
-                <div className="w-24 h-24 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-green-600/30">
-                  <Phone className="w-12 h-12 text-white" />
+                <div className="w-20 h-20 bg-primary-500 rounded-sm flex items-center justify-center mx-auto mb-4 shadow-lg">
+                  <Phone className="w-10 h-10 text-white" />
                 </div>
-                <h2 className="text-xl font-semibold text-white mb-2">Ready to Call</h2>
-                <p className="text-gray-400">Tap the button below to start your voice conversation</p>
+                <h2 className="text-lg font-semibold text-white mb-2">Ready to Call</h2>
+                <p className="text-sm text-neutral-400">Tap the button below to start your voice conversation</p>
               </div>
               <button
                 onClick={startCall}
                 disabled={!isConnected || isProcessing}
-                className="px-8 py-4 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white rounded-full font-semibold text-lg transition-all transform hover:scale-105 disabled:hover:scale-100 flex items-center justify-center mx-auto"
+                className="px-8 py-4 bg-primary-500 hover:bg-primary-500/90 disabled:bg-neutral-600 text-white rounded-sm font-medium text-base transition-all flex items-center justify-center mx-auto"
               >
                 {isProcessing ? (
-                  <Loader2 className="w-6 h-6 animate-spin mr-2" />
+                  <Loader2 className="w-5 h-5 animate-spin mr-2" />
                 ) : (
-                  <Phone className="w-6 h-6 mr-2" />
+                  <Phone className="w-5 h-5 mr-2" />
                 )}
                 Start Call
               </button>
             </div>
           ) : (
-            // Active call controls
-            <div className="flex items-center justify-center gap-6">
+            <div className="flex items-center justify-center gap-4 sm:gap-6">
               {/* Mic Toggle */}
               <button
                 onClick={toggleMic}
-                className={`w-16 h-16 rounded-full flex items-center justify-center transition-all ${
+                className={`w-14 h-14 rounded-sm flex items-center justify-center transition-all ${
                   isMicOn
-                    ? 'bg-gray-700 hover:bg-gray-600 text-white'
+                    ? 'bg-neutral-700 hover:bg-neutral-600 text-white'
                     : 'bg-red-600 hover:bg-red-700 text-white'
                 }`}
               >
-                {isMicOn ? <Mic className="w-7 h-7" /> : <MicOff className="w-7 h-7" />}
+                {isMicOn ? <Mic className="w-6 h-6" /> : <MicOff className="w-6 h-6" />}
               </button>
 
               {/* Push to Talk - Toggle Button */}
               <button
                 onClick={toggleListening}
                 disabled={!isMicOn || isSpeaking || isProcessing}
-                className={`w-20 h-20 rounded-full flex flex-col items-center justify-center transition-all ${
+                className={`w-16 h-16 sm:w-20 sm:h-20 rounded-sm flex flex-col items-center justify-center transition-all ${
                   isListening
-                    ? 'bg-red-500 hover:bg-red-600 scale-110 animate-pulse'
-                    : 'bg-green-600 hover:bg-green-700 disabled:bg-gray-600'
+                    ? 'bg-red-500 hover:bg-red-600 scale-105'
+                    : 'bg-primary-500 hover:bg-primary-500/90 disabled:bg-neutral-600'
                 } text-white shadow-lg`}
               >
-                <Mic className="w-8 h-8" />
-                <span className="text-xs mt-1">{isListening ? 'Send' : 'Speak'}</span>
+                <Mic className="w-7 h-7" />
+                <span className="text-xs mt-1 font-medium">{isListening ? 'Send' : 'Speak'}</span>
               </button>
 
               {/* Speaker Toggle */}
               <button
                 onClick={toggleSpeaker}
-                className={`w-16 h-16 rounded-full flex items-center justify-center transition-all ${
+                className={`w-14 h-14 rounded-sm flex items-center justify-center transition-all ${
                   isSpeakerOn
-                    ? 'bg-gray-700 hover:bg-gray-600 text-white'
+                    ? 'bg-neutral-700 hover:bg-neutral-600 text-white'
                     : 'bg-red-600 hover:bg-red-700 text-white'
                 }`}
               >
-                {isSpeakerOn ? <Volume2 className="w-7 h-7" /> : <VolumeX className="w-7 h-7" />}
+                {isSpeakerOn ? <Volume2 className="w-6 h-6" /> : <VolumeX className="w-6 h-6" />}
               </button>
 
               {/* End Call */}
               <button
                 onClick={endCall}
-                className="w-16 h-16 bg-red-600 hover:bg-red-700 text-white rounded-full flex items-center justify-center transition-all"
+                className="w-14 h-14 bg-red-600 hover:bg-red-700 text-white rounded-sm flex items-center justify-center transition-all"
               >
-                <PhoneOff className="w-7 h-7" />
+                <PhoneOff className="w-6 h-6" />
               </button>
             </div>
           )}
@@ -767,7 +736,7 @@ const VoiceCall = () => {
 
         {/* Instructions */}
         {isCallActive && (
-          <p className="text-center text-gray-400 text-sm mt-4">
+          <p className="text-center text-neutral-500 text-sm mt-4">
             {isListening 
               ? 'Speak your question, then tap the button again to send' 
               : 'Tap the green button to start speaking'}
