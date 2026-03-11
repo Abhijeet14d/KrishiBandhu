@@ -28,7 +28,7 @@ jobs:
         id: meta-backend
         uses: docker/metadata-action@v5
         with:
-          images: ${{ secrets.DOCKER_USERNAME }}/capstone-backend
+          images: ${{ secrets.DOCKER_USERNAME }}/capstone-backend:latest
           tags: |
             type=ref,event=branch
             type=sha,prefix=
@@ -64,7 +64,7 @@ jobs:
         id: meta-frontend
         uses: docker/metadata-action@v5
         with:
-          images: ${{ secrets.DOCKER_USERNAME }}/capstone-frontend
+          images: ${{ secrets.DOCKER_USERNAME }}/capstone-frontend:latest
           tags: |
             type=ref,event=branch
             type=sha,prefix=

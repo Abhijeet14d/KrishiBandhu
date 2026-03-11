@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: krishibandhu-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: krishibandhu-backend
+  template:
+    metadata:
+      labels:
+        app: krishibandhu-backend
+    spec:
+      containers:
+      - name: backend
+        image: abhijeet14d/capstone-backend:latest
+        ports:
+        - containerPort: 5000
+        envFrom:
+        - secretRef:
+            name: krishibandhu-secret
