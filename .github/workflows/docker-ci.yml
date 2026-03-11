@@ -28,11 +28,11 @@ jobs:
         id: meta-backend
         uses: docker/metadata-action@v5
         with:
-          images: ${{ secrets.DOCKER_USERNAME }}/capstone-backend:latest
+          images: ${{ secrets.DOCKER_USERNAME }}/capstone-backend
           tags: |
+            type=raw,value=latest
             type=ref,event=branch
             type=sha,prefix=
-            type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and Push Backend Image
         uses: docker/build-push-action@v5
@@ -64,11 +64,11 @@ jobs:
         id: meta-frontend
         uses: docker/metadata-action@v5
         with:
-          images: ${{ secrets.DOCKER_USERNAME }}/capstone-frontend:latest
+          images: ${{ secrets.DOCKER_USERNAME }}/capstone-frontend
           tags: |
+            type=raw,value=latest
             type=ref,event=branch
             type=sha,prefix=
-            type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and Push Frontend Image
         uses: docker/build-push-action@v5
