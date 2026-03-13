@@ -354,6 +354,8 @@ Capstone/
 - Mobile app (React Native)
 - Admin dashboard
 
+## Deployment
+
 ## License
 
 This project is for educational purposes (Capstone Project).
