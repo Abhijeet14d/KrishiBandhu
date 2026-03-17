@@ -1,6 +1,9 @@
 import { io } from 'socket.io-client';
 
-const SOCKET_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const SOCKET_URL = API_BASE.startsWith('http')
+  ? API_BASE.replace(/\/api\/?$/, '')
+  : window.location.origin;
 
 class SocketService {
   constructor() {
