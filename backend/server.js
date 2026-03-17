@@ -6,6 +6,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const compression = require('compression');
 const morgan = require('morgan');
+const client = require('prom-client');
 const connectDB = require('./config/database');
 const { initializeSocketHandlers } = require('./socket/socketHandler');
 
@@ -19,6 +20,17 @@ if (missingVars.length > 0) {
 
 const app = express();
 const httpServer = createServer(app);
+
+const register = new client.Registry();
+client.collectDefaultMetrics({ register });
+
+const httpRequestDurationMs = new client.Histogram({
+  name: 'http_request_duration_ms',
+  help: 'Duration of HTTP requests in ms',
+  labelNames: ['method', 'route', 'status_code'],
+  buckets: [10, 50, 100, 200, 500, 1000, 3000, 5000],
+  registers: [register]
+});
 
 // Strip trailing slash from FRONTEND_URL to avoid CORS mismatch
 const FRONTEND_URL = (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/+$/, '');
@@ -46,6 +58,18 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' })); // Increased for image uploads
 app.use(express.urlencoded({ extended: true }));
 
+app.use((req, res, next) => {
+  const start = process.hrtime.bigint();
+  res.on('finish', () => {
+    const durationMs = Number(process.hrtime.bigint() - start) / 1e6;
+    const route = req.route?.path || req.baseUrl || req.path || 'unknown';
+    httpRequestDurationMs
+      .labels(req.method, route, String(res.statusCode))
+      .observe(durationMs);
+  });
+  next();
+});
+
 // Routes
 app.use('/api/auth', require('./routes/auth.routes'));
 app.use('/api/conversations', require('./routes/conversation.routes'));
@@ -55,6 +79,11 @@ app.use('/api/admin', require('./routes/admin.routes'));
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', message: 'Server is running', socketio: 'enabled' });
+});
+
+app.get('/metrics', async (req, res) => {
+  res.set('Content-Type', register.contentType);
+  res.end(await register.metrics());
 });
 
 // Initialize Socket.io handlers

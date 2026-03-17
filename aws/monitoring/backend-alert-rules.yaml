@@ -1,0 +1,27 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: backend-alert-rules
+  namespace: monitoring
+  labels:
+    release: monitoring
+spec:
+  groups:
+    - name: backend.rules
+      rules:
+        - alert: BackendServiceDown
+          expr: up{service="backend-service"} == 0
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Backend service is down"
+            description: "Prometheus cannot scrape backend-service for more than 2 minutes."
+        - alert: BackendHighP95Latency
+          expr: histogram_quantile(0.95, sum(rate(http_request_duration_ms_bucket[5m])) by (le)) > 1500
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Backend p95 latency is high"
+            description: "p95 HTTP request latency is above 1500ms for 5 minutes."
