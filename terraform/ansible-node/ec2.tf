@@ -23,6 +23,7 @@ resource "aws_instance" "ansible" {
   key_name                    = aws_key_pair.ansible_key.key_name
   subnet_id                   = data.terraform_remote_state.vpc.outputs.public_subnets[0]
   associate_public_ip_address = true
+  user_data = file("install_ansible.sh")
   vpc_security_group_ids = [
     aws_security_group.ansible_sg.id
   ]
