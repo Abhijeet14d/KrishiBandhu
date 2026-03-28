@@ -2,3 +2,4 @@
 ```
 scp -i devops-key.pem -r ansible ubuntu@ANSIBLE_PUBLIC_IP:/home/ubuntu/
 ```
+2. 
