@@ -19,17 +19,23 @@ RUN npm run build
 # Stage 2: Serve the application with Nginx
 FROM nginx:alpine
 
+# Create non-root user
+RUN addgroup -S appuser && adduser -S appuser -G appuser
+
 # Remove default Nginx files
 RUN rm -rf /usr/share/nginx/html/*
 
 # Copy the correct output folder (dist instead of build)
 COPY --from=build /app/dist /usr/share/nginx/html
 
+# Give ownership to non-root user
+RUN chown -R appuser:appuser /usr/share/nginx/html
+
 # Use custom Nginx config with API and Socket.IO reverse proxy
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Expose port 80
-EXPOSE 80
+EXPOSE 8080
 
 # Start Nginx
 CMD ["nginx", "-g", "daemon off;"]
