@@ -9,12 +9,18 @@ const morgan = require('morgan');
 const connectDB = require('./config/database');
 const { initializeSocketHandlers } = require('./socket/socketHandler');
 
-// Validate required environment variables
-const requiredEnvVars = ['MONGODB_URI', 'JWT_SECRET', 'JWT_REFRESH_SECRET', 'GEMINI_API_KEY', 'EMAIL_HOST', 'EMAIL_USER', 'EMAIL_PASSWORD'];
-const missingVars = requiredEnvVars.filter(v => !process.env[v]);
-if (missingVars.length > 0) {
-  console.error(`❌ Missing required environment variables: ${missingVars.join(', ')}`);
+// Validate critical environment variables only.
+const criticalEnvVars = ['MONGODB_URI', 'JWT_SECRET', 'JWT_REFRESH_SECRET'];
+const missingCriticalVars = criticalEnvVars.filter(v => !process.env[v]);
+if (missingCriticalVars.length > 0) {
+  console.error(`❌ Missing critical environment variables: ${missingCriticalVars.join(', ')}`);
   process.exit(1);
+}
+
+const optionalEnvVars = ['GEMINI_API_KEY', 'EMAIL_HOST', 'EMAIL_USER', 'EMAIL_PASSWORD'];
+const missingOptionalVars = optionalEnvVars.filter(v => !process.env[v]);
+if (missingOptionalVars.length > 0) {
+  console.warn(`⚠️ Missing optional environment variables: ${missingOptionalVars.join(', ')}`);
 }
 
 const app = express();
@@ -65,8 +71,10 @@ const io = new Server(httpServer, {
   transports: ['websocket', 'polling']
 });
 
-// Connect to MongoDB
-connectDB();
+// Connect to MongoDB and keep server alive even if first attempt fails.
+connectDB().catch((error) => {
+  console.error(`❌ Initial MongoDB connection failed: ${error.message}`);
+});
 
 // Middleware
 app.use(helmet());
