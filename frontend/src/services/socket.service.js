@@ -1,6 +1,8 @@
 import { io } from 'socket.io-client';
 
-const SOCKET_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const SOCKET_URL = (import.meta.env.VITE_SOCKET_URL || API_URL.replace(/\/api\/?$/, '')).replace(/\/+$/, '');
+const SOCKET_PATH = import.meta.env.VITE_SOCKET_PATH || '/socket.io';
 
 class SocketService {
   constructor() {
@@ -31,11 +33,13 @@ class SocketService {
       console.log('🔑 Token available:', !!token);
 
       this.socket = io(SOCKET_URL, {
+        path: SOCKET_PATH,
         auth: { token },
         transports: ['websocket', 'polling'],
         reconnection: true,
         reconnectionAttempts: 5,
         reconnectionDelay: 1000,
+        reconnectionDelayMax: 5000,
         timeout: 10000
       });
 

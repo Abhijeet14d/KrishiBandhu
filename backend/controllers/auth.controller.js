@@ -545,8 +545,13 @@ const forgotPassword = async (req, res) => {
     const resetToken = user.generateResetToken();
     await user.save({ validateBeforeSave: false });
 
-    // Create reset URL
-    const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+    // Create reset URL using the first configured frontend URL.
+    const frontendBaseUrl = (
+      (process.env.FRONTEND_URLS || '').split(',').map((url) => url.trim()).find(Boolean)
+      || process.env.FRONTEND_URL
+      || 'http://localhost:5173'
+    ).replace(/\/+$/, '');
+    const resetUrl = `${frontendBaseUrl}/reset-password?token=${resetToken}`;
 
     // Send email
     const { sendPasswordResetEmail } = require('../utils/email');

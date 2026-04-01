@@ -51,6 +51,13 @@ const VoiceCall = () => {
   useEffect(() => {
     const ua = navigator.userAgent;
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const isLocalhost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+
+    if (!window.isSecureContext && !isLocalhost) {
+      setBrowserWarning('Voice features require HTTPS in production. Please open the app over https:// and allow microphone access.');
+      return;
+    }
+
     if (!SpeechRecognition) {
       if (/Firefox/i.test(ua)) {
         setBrowserWarning('Firefox does not support the Web Speech API. Please use Google Chrome or Microsoft Edge for the best experience.');

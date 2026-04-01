@@ -1,7 +1,9 @@
 import axios from 'axios';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json'
   }
@@ -26,6 +28,11 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
+    const refreshUrl = `${API_BASE_URL}/auth/refresh-token`;
+
+    if (!originalRequest) {
+      return Promise.reject(error);
+    }
 
     // If token expired, try to refresh
     if (error.response?.status === 401 && !originalRequest._retry) {
@@ -34,7 +41,7 @@ api.interceptors.response.use(
       try {
         const refreshToken = localStorage.getItem('refreshToken');
         const response = await axios.post(
-          `${import.meta.env.VITE_API_URL}/auth/refresh-token`,
+          refreshUrl,
           { refreshToken }
         );
 

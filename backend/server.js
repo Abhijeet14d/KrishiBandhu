@@ -20,16 +20,49 @@ if (missingVars.length > 0) {
 const app = express();
 const httpServer = createServer(app);
 
-// Strip trailing slash from FRONTEND_URL to avoid CORS mismatch
-const FRONTEND_URL = (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/+$/, '');
+const normalizeOrigin = (origin) => (origin || '').trim().replace(/\/+$/, '');
+
+// Supports FRONTEND_URL plus comma-separated FRONTEND_URLS for multi-env deploys.
+const configuredOrigins = [
+  ...(process.env.FRONTEND_URLS || '').split(','),
+  process.env.FRONTEND_URL || 'http://localhost:5173'
+]
+  .map(normalizeOrigin)
+  .filter(Boolean);
+
+// Keep common local dev URLs allowed even when production URLs are configured.
+if (process.env.NODE_ENV !== 'production') {
+  configuredOrigins.push('http://localhost:5173', 'http://127.0.0.1:5173');
+}
+
+const allowedOrigins = [...new Set(configuredOrigins)];
+const socketPath = process.env.SOCKET_PATH || '/socket.io';
+
+const corsOriginValidator = (origin, callback) => {
+  // Allow non-browser clients/health checks with no origin.
+  if (!origin) {
+    callback(null, true);
+    return;
+  }
+
+  const normalizedOrigin = normalizeOrigin(origin);
+  if (allowedOrigins.includes(normalizedOrigin)) {
+    callback(null, true);
+    return;
+  }
+
+  callback(new Error(`CORS blocked for origin: ${origin}`));
+};
 
 // Initialize Socket.io
 const io = new Server(httpServer, {
+  path: socketPath,
   cors: {
-    origin: FRONTEND_URL,
-    methods: ['GET', 'POST'],
+    origin: corsOriginValidator,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     credentials: true
-  }
+  },
+  transports: ['websocket', 'polling']
 });
 
 // Connect to MongoDB
@@ -40,8 +73,9 @@ app.use(helmet());
 app.use(compression());
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 app.use(cors({
-  origin: FRONTEND_URL,
-  credentials: true
+  origin: corsOriginValidator,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
 }));
 app.use(express.json({ limit: '10mb' })); // Increased for image uploads
 app.use(express.urlencoded({ extended: true }));
@@ -74,5 +108,6 @@ const PORT = process.env.PORT || 5000;
 httpServer.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📍 Environment: ${process.env.NODE_ENV}`);
-  console.log(`🔌 Socket.io enabled`);
+  console.log(`🌐 Allowed CORS origins: ${allowedOrigins.join(', ')}`);
+  console.log(`🔌 Socket.io enabled on path: ${socketPath}`);
 });

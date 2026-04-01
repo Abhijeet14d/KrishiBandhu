@@ -1,24 +1,78 @@
 const nodemailer = require('nodemailer');
 
-// Create transporter with timeouts to prevent hanging in production
+const emailPort = Number(process.env.EMAIL_PORT || 587);
+const emailSecure = process.env.EMAIL_SECURE
+  ? process.env.EMAIL_SECURE === 'true'
+  : emailPort === 465;
+
+// Create transporter with retry-friendly and production-safe defaults.
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST,
-  port: process.env.EMAIL_PORT,
-  secure: process.env.EMAIL_PORT === '465',
+  port: emailPort,
+  secure: emailSecure,
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASSWORD
   },
+  pool: true,
+  maxConnections: 3,
+  maxMessages: 100,
   connectionTimeout: 10000,
   greetingTimeout: 10000,
-  socketTimeout: 15000
+  socketTimeout: 20000
 });
+
+let transporterVerified = false;
+let lastVerifyAttempt = 0;
+
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const shouldRetryEmailError = (error) => {
+  const retryableCodes = ['ETIMEDOUT', 'ECONNECTION', 'ESOCKET', 'EAI_AGAIN', 'EMFILE'];
+  if (retryableCodes.includes(error?.code)) return true;
+
+  const statusCode = Number(error?.responseCode);
+  return [421, 425, 429, 450, 451, 452].includes(statusCode);
+};
+
+const ensureTransporterVerified = async () => {
+  const now = Date.now();
+  if (transporterVerified || now - lastVerifyAttempt < 60_000) {
+    return;
+  }
+
+  lastVerifyAttempt = now;
+  await transporter.verify();
+  transporterVerified = true;
+};
+
+const sendMailWithRetry = async (mailOptions, retries = 2) => {
+  let lastError;
+
+  for (let attempt = 0; attempt <= retries; attempt += 1) {
+    try {
+      await ensureTransporterVerified();
+      return await transporter.sendMail(mailOptions);
+    } catch (error) {
+      lastError = error;
+      transporterVerified = false;
+
+      if (attempt === retries || !shouldRetryEmailError(error)) {
+        throw error;
+      }
+
+      await wait(500 * (attempt + 1));
+    }
+  }
+
+  throw lastError;
+};
 
 // Send OTP email
 const sendOTPEmail = async (email, name, otp) => {
   try {
     const mailOptions = {
-      from: `"Farmer Assistant" <${process.env.EMAIL_USER}>`,
+      from: process.env.EMAIL_FROM || `"Farmer Assistant" <${process.env.EMAIL_USER}>`,
       to: email,
       subject: 'Email Verification - OTP',
       html: `
@@ -61,7 +115,7 @@ const sendOTPEmail = async (email, name, otp) => {
       `
     };
 
-    await transporter.sendMail(mailOptions);
+    await sendMailWithRetry(mailOptions);
     console.log(`✉️ OTP email sent to ${email}`);
     return { success: true };
   } catch (error) {
@@ -74,7 +128,7 @@ const sendOTPEmail = async (email, name, otp) => {
 const sendPasswordResetEmail = async (email, name, resetUrl) => {
   try {
     const mailOptions = {
-      from: `"Farmer Assistant" <${process.env.EMAIL_USER}>`,
+      from: process.env.EMAIL_FROM || `"Farmer Assistant" <${process.env.EMAIL_USER}>`,
       to: email,
       subject: 'Password Reset Request',
       html: `
@@ -125,7 +179,7 @@ const sendPasswordResetEmail = async (email, name, resetUrl) => {
       `
     };
 
-    await transporter.sendMail(mailOptions);
+    await sendMailWithRetry(mailOptions);
     console.log(`✉️ Password reset email sent to ${email}`);
     return { success: true };
   } catch (error) {
